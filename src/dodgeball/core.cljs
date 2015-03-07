@@ -5,7 +5,7 @@
 (enable-console-print!)
 
 
-(defonce app-state (atom {:balls [1 3 5 7 9]}))
+(defonce app-state (atom {:balls [1 0 1 0 1 0 1 0 1]}))
 
 (defn bench []
   (dom/table nil
@@ -14,45 +14,36 @@
        (dom/td nil))))))
 
 
-(defn board []
+(defn cell-view [n owner]
+  (om/component (dom/td nil n)))
+
+(defn row-view [data owner]
+  (om/component
+    (apply dom/tr nil
+      (om/build-all cell-view data))))
+
+(defn board [data]
  (dom/div #js {:className "container"}
  (bench)
  (dom/table nil
     (vec (for [y (range 0 9)]
-      (dom/tr
-        #js {:className
-          (cond
-            (= y 3) "middle-top"
-            (= y 5) "middle-bottom")}
+      (if (= y 5)
+        (om/build row-view (:balls data))
 
-        (vec (for [x (range 0 9)]
-          (dom/td nil)))))))
+        (dom/tr
+          #js {:className
+            (cond
+              (or (= y 3) (= y 6)) "middle-top")}
+          (vec (for [x (range 0 9)]
+            (dom/td nil y))))))))
   (bench)))
-
-(defn row-view [data owner]
-  (reify
-    om/IRender
-    (render [this]
-      (apply dom/tr nil
-        (om/build-all square-view (:balls data))))))
-
-(defn square-view [square owner]
-  (reify
-    (om/IRender
-     (render [this]
-             (dom/td nil
-                     (if "ball")))))
-
-(om/root row-view app-state
-         {:target (. js/document (getElementById "container"))})
-
 
 
 (om/root
   (fn [data owner]
     (reify om/IRender
       (render [_]
-        (board))))
+        (board data))))
   app-state
   {:target (. js/document (getElementById "app"))})
 
