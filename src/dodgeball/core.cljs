@@ -36,17 +36,20 @@
 
 (defn cell-view [data owner]
   (om/component (dom/td nil
-                        (if (not= data nil) (dom/img #js {:src (str "images/" (:image data))})))))
+                        (if data
+                          (dom/img #js {:src (str "images/" (:image data))})))))
 
 (defn find-cell [x y data]
   (first
-   (filter #(and (= (:x %) x) (= (:y %) y)) data)))
+    (filter #(and (= (:x %) x)
+                  (= (:y %) y))
+            data)))
 
 
 (defn board [data]
- (dom/div #js {:className "container"}
- (bench)
- (dom/table nil
+  (dom/div #js {:className "container"}
+  (bench)
+  (dom/table nil
     (vec (for [y (range 0 board-height)]
       (dom/tr
         #js {:className
