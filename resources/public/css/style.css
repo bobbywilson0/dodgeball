@@ -60,6 +60,12 @@ td {
   border: thin solid #999;
 }
 
+td img {
+  margin: auto;
+  display: block;
+  width: 32px;
+}
+
 tr.middle-top {
   border-top: 2px dashed #000;
 }

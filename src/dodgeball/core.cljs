@@ -6,21 +6,22 @@
 
 
 (defonce app-state (atom
-                    {:team1 [{:x 0, :y 0, :has-ball false}
-                             {:x 2, :y 0, :has-ball false}
-                             {:x 4, :y 0, :has-ball false}
-                             {:x 6, :y 0, :has-ball false}
-                             {:x 8, :y 0, :has-ball false}]
-                     :team2 [{:x 0, :y 8, :has-ball false}
-                             {:x 2, :y 8, :has-ball false}
-                             {:x 4, :y 8, :has-ball false}
-                             {:x 6, :y 8, :has-ball false}
-                             {:x 8, :y 8, :has-ball false}]
-                     :loose-balls [{:x 0, :y 4}
-                                   {:x 2, :y 4}
-                                   {:x 4, :y 4}
-                                   {:x 6, :y 4}
-                                   {:x 8, :y 4}]}))
+                    {:cells
+                      [{:x 0, :y 0, :team \a, :image "back-noball.gif"}
+                       {:x 2, :y 0, :team \a, :image "back-noball.gif"}
+                       {:x 4, :y 0, :team \a, :image "back-noball.gif"}
+                       {:x 6, :y 0, :team \a, :image "back-noball.gif"}
+                       {:x 8, :y 0, :team \a, :image "back-noball.gif"}
+                       {:x 0, :y 8, :team \b, :image "back-noball.gif"}
+                       {:x 2, :y 8, :team \b, :image "back-noball.gif"}
+                       {:x 4, :y 8, :team \b, :image "back-noball.gif"}
+                       {:x 6, :y 8, :team \b, :image "back-noball.gif"}
+                       {:x 8, :y 8, :team \b, :image "back-noball.gif"}
+                       {:x 0, :y 4, :ball true, :image "ball.gif"}
+                       {:x 2, :y 4, :ball true, :image "ball.gif"}
+                       {:x 4, :y 4, :ball true, :image "ball.gif"}
+                       {:x 6, :y 4, :ball true, :image "ball.gif"}
+                       {:x 8, :y 4, :ball true, :image "ball.gif"}]}))
 
 (def board-width 9)
 (def board-height 9)
@@ -33,8 +34,13 @@
        (dom/td nil))))))
 
 
-(defn cell-view [n owner]
-  (om/component (dom/td nil n)))
+(defn cell-view [data owner]
+  (om/component (dom/td nil
+                        (if (not= data nil) (dom/img #js {:src (str "images/" (:image data))})))))
+
+(defn find-cell [x y data]
+  (first
+   (filter #(and (= (:x %) x) (= (:y %) y)) data)))
 
 
 (defn board [data]
@@ -47,8 +53,9 @@
           (cond
             (or (= y 3) (= y 6)) "middle-top")}
         (vec (for [x (range 0 board-width)]
-          (om/build cell-view y)))))))
-  (bench)))
+          (om/build cell-view
+                    (find-cell x y (:cells data))))))))
+  (bench))))
 
 
 (om/root
