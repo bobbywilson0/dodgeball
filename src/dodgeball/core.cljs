@@ -4,7 +4,6 @@
 
 (enable-console-print!)
 
-
 (defonce app-state (atom
                     {:cells
                       {:team-a
@@ -20,20 +19,24 @@
                           {:player 4 :x 6, :y 8}
                           {:player 5 :x 8, :y 8}]
                        :loose-balls
-                         [{:x 0, :y 4}
-                         {:x 2, :y 4}
-                         {:x 4, :y 4}
-                         {:x 6, :y 4}
-                         {:x 8, :y 4}]
-                     :selected-unit {}}}))
+                         [{:ball 1 :x 0, :y 4}
+                         {:ball 2 :x 2, :y 4}
+                         {:ball 3 :x 4, :y 4}
+                         {:ball 4 :x 6, :y 4}
+                         {:ball 5 :x 8, :y 4}]}
+                       :selected-unit {:x 0 :y 0}}))
 
-(def board-width 9)
-(def board-height 9)
+(def board-size (range 0 9))
 (def bench-size 4)
 (def player-image "images/back-noball.gif")
 (def ball-image "images/ball.gif")
 
+(defn border-top [y]
+  (cond
+    (or (= y 3) (= y 6)) "middle-top"))
 
+(defn players [data]
+  (concat (:team-a (:cells data)) (:team-b (:cells data))))
 
 (defn bench []
   (dom/table nil
@@ -41,42 +44,68 @@
       (vec (for [n (range 0 bench-size)]
        (dom/td nil))))))
 
+(defn update-player-position []
+    (:selected-unit (om/root-cursor app-state)))
 
-(defn player [data owner]
-  (do (println data))
-  (if data
-    (om/component (dom/td #js {:onClick #(om/set-state! owner :selected-unit data) }
-                          (dom/img #js {:src player-image })))
-    (om/component (dom/td #js {:onClick #(println data) }
-                          ))))
+(defn blank-unit [data owner]
+  (reify
+    om/IInitState
+    (init-state [_]
+                {:init-state {:x (data :x) :y (data :y)}})
+    om/IRender
+    (render [_]
+      (dom/td #js {:onClick update-player-position}))))
 
-(defn ball [data owner]
-  (om/component (dom/td nil
-                        (if data
-                          (dom/img #js {:src ball-image})))))
+(defn player-unit [data owner]
+  (reify
+    om/IInitState
+    (init-state [_]
+                {:init-state {:x (data :x) :y (data :y)}})
+    om/IRender
+    (render [_]
+      (if (:player data)
+        (dom/td #js {:onClick #(om/update! (om/ref-cursor (:selected-unit (om/root-cursor app-state))) data)}
+          (dom/img #js {:src player-image }))
+        (om/build blank-unit data)))))
 
-(defn find-cell [x y data]
-  (first
-    (filter #(and (= (:x %) x)
-                  (= (:y %) y))
-            data)))
+
+
+
+(defn ball-unit [data owner]
+  (reify
+    om/IInitState
+    (init-state [_]
+                {:init-state {:x (data :x) :y (data :y)}})
+    om/IRender
+    (render [_]
+      (if (:ball data)
+        (dom/td nil
+          (dom/img #js {:src ball-image}))
+        (om/build blank-unit data)))))
+
+(defn find-unit [x y data]
+  (let [found (first
+                (filter
+                  #(and (= (:x %) x)
+                        (= (:y %) y))
+                data))]
+    (if found
+      found
+      {:x x :y y})))
 
 
 (defn board [data]
   (dom/div #js {:className "container"}
   (bench)
   (dom/table nil
-    (vec (for [y (range 0 board-height)]
-      (dom/tr
-        #js {:className
-          (cond
-            (or (= y 3) (= y 6)) "middle-top")}
-              (vec (for [x (range 0 board-width)]
-                (if (= y 4)
-                  (om/build ball
-                    (find-cell x y (concat [:x x] [:y y] (:loose-balls (:cells data)))))
-                  (om/build player
-                    (concat (:team-a (:cells data)) (:team-b (:cells data)))))))))))
+    (vec (for [y board-size]
+      (dom/tr #js {:className (border-top y)}
+        (vec (for [x board-size]
+          (if (= y 4)
+            (om/build ball-unit
+              (find-unit x y (:loose-balls (:cells data))))
+            (om/build player-unit
+              (find-unit x y (players data))))))))))
   (bench)))
 
 
@@ -87,8 +116,5 @@
         (board data))))
   app-state
   {:target (. js/document (getElementById "app"))})
-
-
-
 
 
