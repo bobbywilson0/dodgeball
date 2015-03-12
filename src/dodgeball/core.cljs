@@ -45,7 +45,7 @@
        (dom/td nil))))))
 
 (defn update-player-position []
-    (:selected-unit (om/root-cursor app-state)))
+    (om/update! (om/ref-cursor (:selected-unit (om/root-cursor app-state))) {:x 888 :y 999}))
 
 (defn blank-unit [data owner]
   (reify
