@@ -44,9 +44,6 @@
       (vec (for [n (range 0 bench-size)]
        (dom/td nil))))))
 
-(defn update-player-position []
-    (om/update! (om/ref-cursor (:selected-unit (om/root-cursor app-state))) {:x 888 :y 999}))
-
 (defn blank-unit [data owner]
   (reify
     om/IInitState
@@ -54,28 +51,26 @@
                 {:init-state {:x (data :x) :y (data :y)}})
     om/IRender
     (render [_]
-      (dom/td #js {:onClick update-player-position}))))
+      (dom/td nil))))
 
 (defn player-unit [data owner]
   (reify
     om/IInitState
     (init-state [_]
-                {:init-state {:x (data :x) :y (data :y)}})
-    om/IRender
-    (render [_]
+                {:position {:x (data :x) :y (data :y)}})
+    om/IRenderState
+    (render-state [_ _]
       (if (:player data)
         (dom/td #js {:onClick #(om/update! (om/ref-cursor (:selected-unit (om/root-cursor app-state))) data)}
           (dom/img #js {:src player-image }))
         (om/build blank-unit data)))))
 
 
-
-
 (defn ball-unit [data owner]
   (reify
-    om/IInitState
-    (init-state [_]
-                {:init-state {:x (data :x) :y (data :y)}})
+;;     om/IInitState
+;;     (init-state [_]
+;;       {:x (data :x) :y (data :y)})
     om/IRender
     (render [_]
       (if (:ball data)
@@ -105,7 +100,7 @@
             (om/build ball-unit
               (find-unit x y (:loose-balls (:cells data))))
             (om/build player-unit
-              (find-unit x y (players data))))))))))
+              (find-unit x y (players data)) {:init-state {:x x :y y}}))))))))
   (bench)))
 
 
