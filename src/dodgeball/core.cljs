@@ -44,39 +44,39 @@
       (vec (for [n (range 0 bench-size)]
        (dom/td nil))))))
 
-(defn blank-unit [data owner]
+(defn blank-view [data owner]
   (reify
     om/IInitState
     (init-state [_]
-                {:init-state {:x (data :x) :y (data :y)}})
+                {:position {:x (data :x) :y (data :y)}})
     om/IRender
     (render [_]
       (dom/td nil))))
 
-(defn player-unit [data owner]
+(defn player-view [data owner]
   (reify
     om/IInitState
     (init-state [_]
                 {:position {:x (data :x) :y (data :y)}})
     om/IRenderState
     (render-state [_ _]
-      (if (:player data)
+     (if (:player data)
         (dom/td #js {:onClick #(om/update! (om/ref-cursor (:selected-unit (om/root-cursor app-state))) data)}
           (dom/img #js {:src player-image }))
-        (om/build blank-unit data)))))
+        (om/build blank-view data)))))
 
 
-(defn ball-unit [data owner]
+(defn ball-view [data owner]
   (reify
-;;     om/IInitState
-;;     (init-state [_]
-;;       {:x (data :x) :y (data :y)})
+    om/IInitState
+    (init-state [_]
+                {:position {:x (data :x) :y (data :y)}})
     om/IRender
     (render [_]
       (if (:ball data)
         (dom/td nil
           (dom/img #js {:src ball-image}))
-        (om/build blank-unit data)))))
+        (om/build blank-view data)))))
 
 (defn find-unit [x y data]
   (let [found (first
@@ -89,26 +89,28 @@
       {:x x :y y})))
 
 
-(defn board [data]
-  (dom/div #js {:className "container"}
-  (bench)
-  (dom/table nil
-    (vec (for [y board-size]
-      (dom/tr #js {:className (border-top y)}
-        (vec (for [x board-size]
-          (if (= y 4)
-            (om/build ball-unit
-              (find-unit x y (:loose-balls (:cells data))))
-            (om/build player-unit
-              (find-unit x y (players data)) {:init-state {:x x :y y}}))))))))
-  (bench)))
-
+(defn board-view [data]
+  (reify
+    om/IRender
+    (render [_]
+      (dom/table nil
+        (vec (for [y board-size]
+          (dom/tr #js {:className (border-top y)}
+            (vec (for [x board-size]
+              (if (= y 4)
+                (om/build ball-view
+                  (find-unit x y (:loose-balls (:cells data))))
+                (om/build player-view
+                  (find-unit x y (players data)))))))))))))
 
 (om/root
   (fn [data owner]
     (reify om/IRender
       (render [_]
-        (board data))))
+        (dom/div #js {:className "container"}
+          (bench)
+          (om/build board-view data)
+          (bench)))))
   app-state
   {:target (. js/document (getElementById "app"))})
 
