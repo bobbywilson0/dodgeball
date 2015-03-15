@@ -63,17 +63,9 @@ td {
 td img {
   margin: auto;
   display: block;
-  width: 32px;
+ /* height: 64px;*/
 }
 
 tr.middle-top {
   border-top: 2px dashed #000;
-}
-
-tr.middle-bottom {
-  border-bottom: 2px dashed #000;
-}
-
-td.middle-middle {
-  background-color: #ddd;
 }

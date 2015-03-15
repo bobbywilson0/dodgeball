@@ -1,33 +1,33 @@
 (ns ^:figwheel-always dodgeball.core
-    (:require[om.core :as om :include-macros true]
-              [om.dom :as dom :include-macros true]))
+    (:require-macros [cljs.core.async.macros :refer [go]])
+    (:require [om.core :as om :include-macros true]
+              [om.dom :as dom :include-macros true]
+              [cljs.core.async :refer [put! chan <!]]))
 
 (enable-console-print!)
 
 (defonce app-state (atom
                     {:cells
-                      {:team-a
-                         [{:player 1 :x 0, :y 0}
-                          {:player 2 :x 2, :y 0}
-                          {:player 3 :x 4, :y 0}
-                          {:player 4 :x 6, :y 0}
-                          {:player 5 :x 8, :y 0}]
-                       :team-b
-                         [{:player 1 :x 0, :y 8}
-                          {:player 2 :x 2, :y 8}
-                          {:player 3 :x 4, :y 8}
-                          {:player 4 :x 6, :y 8}
-                          {:player 5 :x 8, :y 8}]
-                       :loose-balls
-                         [{:ball 1 :x 0, :y 4}
-                         {:ball 2 :x 2, :y 4}
-                         {:ball 3 :x 4, :y 4}
-                         {:ball 4 :x 6, :y 4}
-                         {:ball 5 :x 8, :y 4}]}
-                       :selected-unit {:x 0 :y 0}}))
+                      [{:type :opponent :x 0, :y 0}
+                       {:type :opponent :x 2, :y 0}
+                       {:type :opponent :x 4, :y 0}
+                       {:type :opponent :x 6, :y 0}
+                       {:type :opponent :x 8, :y 0}
+                       {:type :my-team :x 0, :y 8}
+                       {:type :my-team :x 2, :y 8}
+                       {:type :my-team :x 4, :y 8}
+                       {:type :my-team :x 6, :y 8}
+                       {:type :my-team :x 8, :y 8}
+                       {:type :loose-ball :x 0, :y 4}
+                       {:type :loose-ball :x 2, :y 4}
+                       {:type :loose-ball :x 4, :y 4}
+                       {:type :loose-ball :x 6, :y 4}
+                       {:type :loose-ball :x 8, :y 4}]
+                    :selected-unit {}}))
 
 (def board-size (range 0 9))
 (def bench-size 4)
+(def opponent-image "images/front-noball.gif")
 (def player-image "images/back-noball.gif")
 (def ball-image "images/ball.gif")
 
@@ -35,83 +35,95 @@
   (cond
     (or (= y 3) (= y 6)) "middle-top"))
 
-(defn players [data]
-  (concat (:team-a (:cells data)) (:team-b (:cells data))))
-
 (defn bench []
   (dom/table nil
     (dom/tr nil
       (vec (for [n (range 0 bench-size)]
        (dom/td nil))))))
 
-(defn blank-view [data owner]
+(defn find-piece [position]
+  (first (filter #(and
+                 (= (:x position) (:x %))
+                 (= (:y position) (:y %)))
+               (:cells (om/root-cursor app-state)))))
+
+
+(defn highlight-tile [e unit]
+  (let [cursor (om/ref-cursor (:selected-unit (om/root-cursor app-state)))]
+    (om/update! cursor unit))
+    (set! (-> e .-target .-parentElement .-style .-border) "2px solid #f00"))
+
+(defn update-piece-position [e state]
+  (om/transact! (om/root-cursor app-state) :cells #(conj {:type :my-team :x 1 :y 8})))
+
+(defn ball-view [cursor owner]
   (reify
-    om/IInitState
-    (init-state [_]
-                {:position {:x (data :x) :y (data :y)}})
     om/IRender
     (render [_]
-      (dom/td nil))))
+      (dom/img #js {:src ball-image}))))
 
-(defn player-view [data owner]
+(defn player-view [cursor owner]
   (reify
-    om/IInitState
-    (init-state [_]
-                {:position {:x (data :x) :y (data :y)}})
     om/IRenderState
-    (render-state [_ _]
-     (if (:player data)
-        (dom/td #js {:onClick #(om/update! (om/ref-cursor (:selected-unit (om/root-cursor app-state))) data)}
-          (dom/img #js {:src player-image }))
-        (om/build blank-view data)))))
+    (render-state [this {:keys [move]}]
+      (println cursor)
+      (dom/img #js {:src player-image :onClick (fn [_]
+                                                 (println "hello")
+                                                 (put! move @cursor))}))))
 
-
-(defn ball-view [data owner]
-  (reify
-    om/IInitState
-    (init-state [_]
-                {:position {:x (data :x) :y (data :y)}})
-    om/IRender
-    (render [_]
-      (if (:ball data)
-        (dom/td nil
-          (dom/img #js {:src ball-image}))
-        (om/build blank-view data)))))
-
-(defn find-unit [x y data]
-  (let [found (first
-                (filter
-                  #(and (= (:x %) x)
-                        (= (:y %) y))
-                data))]
-    (if found
-      found
-      {:x x :y y})))
-
-
-(defn board-view [data]
+(defn opponent-view [cursor owner]
   (reify
     om/IRender
     (render [_]
-      (dom/table nil
-        (vec (for [y board-size]
-          (dom/tr #js {:className (border-top y)}
-            (vec (for [x board-size]
-              (if (= y 4)
-                (om/build ball-view
-                  (find-unit x y (:loose-balls (:cells data))))
-                (om/build player-view
-                  (find-unit x y (players data)))))))))))))
+      (dom/img #js {:src opponent-image}))))
 
-(om/root
-  (fn [data owner]
-    (reify om/IRender
-      (render [_]
-        (dom/div #js {:className "container"}
-          (bench)
-          (om/build board-view data)
-          (bench)))))
-  app-state
+(defn tile-view [cursor owner]
+  (reify
+    om/IRenderState
+    (render-state [this {:keys [x y move] :as position}]
+      (dom/td nil
+        (let [found (find-piece position)]
+          (cond
+            (= (:type found) :my-team)
+              (om/build player-view found {:state {:move move}})
+            (= (:type found) :opponent)
+               (om/build opponent-view cursor)
+            (= (:type found) :loose-ball)
+               (om/build ball-view cursor)))))))
+
+
+(defn ball-view [cursor owner]
+  (reify
+    om/IRender
+    (render [_]
+          (dom/img #js {:src ball-image}))))
+
+(defn board-view [app owner]
+  (reify
+     om/IInitState
+     (init-state [_]
+       {:move (chan)})
+    om/IWillMount
+    (will-mount [_]
+      (let [move (om/get-state owner :move)]
+        (go (loop []
+
+          (let [player (<! move)]
+            (println player)
+            (om/transact! app :cells
+              (fn [cs] (vec (remove #(= player %) cs))))
+            (recur))))))
+    om/IRenderState
+    (render-state [this {:keys [move]}]
+      (dom/div #js {:className "container"}
+        (bench)
+        (dom/table nil
+          (vec (for [y board-size]
+            (dom/tr #js {:className (border-top y)}
+              (vec (for [x board-size]
+                (om/build tile-view (:cells app)
+                  {:state {:move move :x x :y y}})))))))
+        (bench)))))
+
+(om/root board-view app-state
   {:target (. js/document (getElementById "app"))})
-
-
