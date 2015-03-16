@@ -27,9 +27,6 @@
 
 (def board-size (range 0 9))
 (def bench-size 4)
-(def opponent-image "images/front-noball.gif")
-(def player-image "images/back-noball.gif")
-(def ball-image "images/ball.gif")
 
 (defn border-top [y]
   (cond
@@ -47,11 +44,8 @@
                  (= (:y position) (:y %)))
                (:cells (om/root-cursor app-state)))))
 
-
-(defn highlight-tile [e unit]
-  (let [cursor (om/ref-cursor (:selected-unit (om/root-cursor app-state)))]
-    (om/update! cursor unit))
-    (set! (-> e .-target .-parentElement .-style .-border) "2px solid #f00"))
+(defn highlight-tile [e]
+ (set! (.. e -target -style -background) "gray"))
 
 (defn update-piece-position [e state]
   (om/transact! (om/root-cursor app-state) :cells #(conj {:type :my-team :x 1 :y 8})))
@@ -60,17 +54,13 @@
   (reify
     om/IRenderState
     (render-state [this {:keys [move]}]
-      (println cursor)
-      (dom/div #js {:className "red-team"}))))
+      (dom/div #js {:onClick #(highlight-tile %) :className "red-team"}))))
 
 (defn opponent-view [cursor owner]
   (reify
     om/IRender
     (render [_]
       (dom/div #js {:className "blue-team"}))))
-
-(defn handle-move [e position]
-  (put! (:move position) position))
 
 (defn tile-view [cursor owner]
   (reify
@@ -85,7 +75,6 @@
                (om/build opponent-view cursor)
             (= (:type found) :loose-ball)
                (om/build ball-view cursor)))))))
-
 
 (defn ball-view [cursor owner]
   (reify
@@ -112,8 +101,7 @@
                            #(if (= player-to-move %)
                                   (assoc % :x x :y y)
                                   %)
-                         cs)))))
-              (println (:cells app))))
+                         cs)))))))
             (recur)))))
     om/IRenderState
     (render-state [this {:keys [move]}]
