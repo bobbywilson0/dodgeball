@@ -55,17 +55,35 @@ table {
 }
 
 td {
-  height: 64px;
-  width: 64px;
+  height: 50px;
+  width: 50px;
   border: thin solid #999;
 }
 
 td img {
   margin: auto;
   display: block;
- /* height: 64px;*/
+ /* height: 50px;*/
 }
 
 tr.middle-top {
   border-top: 2px dashed #000;
+}
+
+.red-team {
+  background-color: red;
+  width: 50px;
+  height: 50px;
+}
+
+.blue-team {
+  background-color: blue;
+  width: 50px;
+  height: 50px;
+}
+
+.ball {
+  background-color: yellow;
+  width: 50px;
+  height: 50px;
 }

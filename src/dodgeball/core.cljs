@@ -36,8 +36,8 @@
     (or (= y 3) (= y 6)) "middle-top"))
 
 (defn bench []
-  (dom/table nil
-    (dom/tr nil
+  ( dom/table nil
+    (apply dom/tr nil
       (vec (for [n (range 0 bench-size)]
        (dom/td nil))))))
 
@@ -56,33 +56,28 @@
 (defn update-piece-position [e state]
   (om/transact! (om/root-cursor app-state) :cells #(conj {:type :my-team :x 1 :y 8})))
 
-(defn ball-view [cursor owner]
-  (reify
-    om/IRender
-    (render [_]
-      (dom/img #js {:src ball-image}))))
-
 (defn player-view [cursor owner]
   (reify
     om/IRenderState
     (render-state [this {:keys [move]}]
       (println cursor)
-      (dom/img #js {:src player-image :onClick (fn [_]
-                                                 (println "hello")
-                                                 (put! move @cursor))}))))
+      (dom/div #js {:className "red-team"}))))
 
 (defn opponent-view [cursor owner]
   (reify
     om/IRender
     (render [_]
-      (dom/img #js {:src opponent-image}))))
+      (dom/div #js {:className "blue-team"}))))
+
+(defn handle-move [e position]
+  (put! (:move position) position))
 
 (defn tile-view [cursor owner]
   (reify
     om/IRenderState
     (render-state [this {:keys [x y move] :as position}]
-      (dom/td nil
-        (let [found (find-piece position)]
+      (let [found (find-piece position)]
+        (dom/td #js {:onClick #(put! move position)}
           (cond
             (= (:type found) :my-team)
               (om/build player-view found {:state {:move move}})
@@ -96,7 +91,7 @@
   (reify
     om/IRender
     (render [_]
-          (dom/img #js {:src ball-image}))))
+          (dom/div #js {:className "ball"}))))
 
 (defn board-view [app owner]
   (reify
@@ -107,19 +102,26 @@
     (will-mount [_]
       (let [move (om/get-state owner :move)]
         (go (loop []
-
-          (let [player (<! move)]
-            (println player)
-            (om/transact! app :cells
-              (fn [cs] (vec (remove #(= player %) cs))))
-            (recur))))))
+          (let [player-to-move (find-piece (<! move))]
+            (let [{:keys [x y] :as position} (<! move)]
+              (if (find-piece position)
+                (println "CAN'T MOVE THERE")
+                (om/transact! app :cells
+                  (fn [cs]
+                    (vec (map
+                           #(if (= player-to-move %)
+                                  (assoc % :x x :y y)
+                                  %)
+                         cs)))))
+              (println (:cells app))))
+            (recur)))))
     om/IRenderState
     (render-state [this {:keys [move]}]
       (dom/div #js {:className "container"}
         (bench)
-        (dom/table nil
+        (apply dom/table nil
           (vec (for [y board-size]
-            (dom/tr #js {:className (border-top y)}
+            (apply dom/tr #js {:className (border-top y)}
               (vec (for [x board-size]
                 (om/build tile-view (:cells app)
                   {:state {:move move :x x :y y}})))))))
