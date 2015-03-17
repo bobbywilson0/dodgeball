@@ -40,13 +40,6 @@
       (vec (for [n (range 0 bench-size)]
        (dom/td nil))))))
 
-(defn find-piece [position]
-  (let [{:keys [:blue-team :red-team :balls] :as units} (:cells (om/root-cursor app-state))]
-    (first (filter #(and
-                   (= (:x position) (:x %))
-                   (= (:y position) (:y %)))
-                 (flatten (vals units))))))
-
 (defn coords [m]
   (dissoc m :move))
 
@@ -108,15 +101,6 @@
         (if-let [blue-player (blue-unit? x y)]
           (om/build opponent-view blue-player))))))
 
-;; (defn update-unit-positions [units selected-position target-position]
-;;   (vec
-;;     (map
-;;       (fn [unit]
-;;         (if (= selected-position unit)
-;;           (assoc unit apply target-position)
-;;           unit))
-;;       units)))
-
 (defn board-view [app owner]
   (reify
     om/IInitState
@@ -125,19 +109,18 @@
 
     om/IWillMount
     (will-mount [_]
-      (let [move (om/get-state owner :move)]
-        (go (loop []
-          (let [selected (coords (<! move))]
-            (let [target (coords (<! move))]
-              (if (find-piece target)
-                (println "CAN'T MOVE THERE")
-                (om/transact! app [:cells :red-team]
-                  (fn [units]
-                    (vec
-                      (map
-                        #(if (= selected %) target %)
-                        units)))))
-              (recur)))))))
+     (let [move (om/get-state owner :move)]
+       (go (loop []
+          (let [selected (coords (<! move))
+                target (coords (<! move))]
+            (if (red-unit? apply target)
+              (println "CAN'T MOVE THERE")
+              (om/transact! app [:cells :red-team]
+                (fn [units]
+                  (map
+                    #(if (= selected %) target %)
+                    units)))))
+          (recur)))))
 
     om/IRenderState
     (render-state [this {:keys [move]}]
