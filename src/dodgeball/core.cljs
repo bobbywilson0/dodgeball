@@ -127,21 +127,17 @@
     (will-mount [_]
       (let [move (om/get-state owner :move)]
         (go (loop []
-          (let [selected-position (coords (<! move))]
-            (let [target-position (coords (<! move))]
-              (if (find-piece target-position)
+          (let [selected (coords (<! move))]
+            (let [target (coords (<! move))]
+              (if (find-piece target)
                 (println "CAN'T MOVE THERE")
                 (om/transact! app [:cells :red-team]
-                              (fn [xs]
-                                (println xs)
-                               (vec
-                                 (map
-                                    (fn [e]
-                                      (if (= selected-position e)
-                                        (assoc e :x target-position :y target-position)
-                                        e))
-                                  xs))))
-                (recur))))))))
+                  (fn [units]
+                    (vec
+                      (map
+                        #(if (= selected %) target %)
+                        units)))))
+              (recur)))))))
 
     om/IRenderState
     (render-state [this {:keys [move]}]
