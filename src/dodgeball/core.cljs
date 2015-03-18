@@ -43,10 +43,6 @@
 (defn coords [m]
   (dissoc m :move))
 
-(defn all-units [cells]
-  (let [{:keys [:blue-team :red-team :balls] :as units} (:cells (om/root-cursor app-state))]
-  units))
-
 (defn red-unit? [x y]
   (let [{:keys [:red-team]} (:cells (om/root-cursor app-state))]
     (first (filter #(and
@@ -118,8 +114,8 @@
               (om/transact! app [:cells :red-team]
                 (fn [units]
                   (map
-                    #(if (= selected %) target %)
-                    units)))))
+                   #(if (= selected %) target %)
+                   units)))))
           (recur)))))
 
     om/IRenderState
@@ -130,7 +126,7 @@
           (vec (for [y board-size]
             (apply dom/tr #js {:className (border-top y)}
               (vec (for [x board-size]
-                (om/build tile-view all-units
+                (om/build tile-view app
                   {:state {:move move :x x :y y}})))))))
         (bench)))))
 
