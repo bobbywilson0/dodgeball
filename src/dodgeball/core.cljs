@@ -40,14 +40,10 @@
       (vec (for [n (range 0 bench-size)]
        (dom/td nil))))))
 
-(defn coords [m]
-  (dissoc m :move))
-
-(defn unit? [kind x y]
-  (first (filter #(and
-           (= x (:x %))
-           (= y (:y %)))
-         (kind (:cells (om/root-cursor app-state))))))
+(defn unit? [kind coords]
+  (first (filter
+          #(= coords %)
+          (kind (:cells (om/root-cursor app-state))))))
 
 (defn highlight-tile [e]
  (set! (.. e -target -style -background) "gray"))
@@ -55,28 +51,28 @@
 (defn tile-view [cursor owner]
   (reify
     om/IRenderState
-    (render-state [this {:keys [x y move] :as position}]
+    (render-state [this {:keys [coords move] :as position}]
       (dom/td #js {:onClick #(put! move position)}
-        (if-let [ball (unit? :balls x y)]
+        (if-let [ball (unit? :balls coords)]
           (dom/div #js {:className "ball"}))
-        (if-let [red-player (unit? :red-team x y)]
+        (if-let [red-player (unit? :red-team coords)]
           (dom/div #js {:onClick #(highlight-tile %) :className "red-team"}))
-        (if-let [blue-player (unit? :blue-team x y)]
+        (if-let [blue-player (unit? :blue-team coords)]
           (dom/div #js {:className "blue-team"}))))))
 
 (defn board-view [app owner]
   (reify
     om/IInitState
-      (init-state [_]
-        {:move (chan)})
+    (init-state [_]
+      {:move (chan)})
 
     om/IWillMount
     (will-mount [_]
      (let [move (om/get-state owner :move)]
        (go (loop []
-          (let [selected (coords (<! move))
-                target (coords (<! move))]
-            (if (unit? :red-team apply target)
+          (let [selected (:coords (<! move))
+                target (:coords (<! move))]
+            (if (unit? :red-team target)
               (println "CAN'T MOVE THERE")
               (om/transact! app [:cells :red-team]
                 (fn [units]
@@ -94,7 +90,7 @@
             (apply dom/tr #js {:className (border-top y)}
               (vec (for [x board-size]
                 (om/build tile-view app
-                  {:state {:move move :x x :y y}})))))))
+                  {:state {:move move :coords {:x x :y y}}})))))))
         (bench)))))
 
 (om/root board-view app-state
