@@ -9,23 +9,23 @@
 (defonce app-state (atom
                     {:cells
                         {:blue-team
-                         [{:x 0, :y 0}
-                          {:x 2, :y 0}
-                          {:x 4, :y 0}
-                          {:x 6, :y 0}
-                          {:x 8, :y 0}]
+                         [{:coords {:x 0, :y 0} :distance 6}
+                          {:coords {:x 2, :y 0} :distance 6}
+                          {:coords {:x 4, :y 0} :distance 6}
+                          {:coords {:x 6, :y 0} :distance 6}
+                          {:coords {:x 8, :y 0} :distance 6}]
                         :red-team
-                         [{:x 0, :y 8}
-                          {:x 2, :y 8}
-                          {:x 4, :y 8}
-                          {:x 6, :y 8}
-                          {:x 8, :y 8}]
+                         [{:coords {:x 0, :y 8} :distance 6}
+                          {:coords {:x 2, :y 8} :distance 6}
+                          {:coords {:x 4, :y 8} :distance 6}
+                          {:coords {:x 6, :y 8} :distance 6}
+                          {:coords {:x 8, :y 8} :distance 6}]
                         :balls
-                         [{:x 0, :y 4}
-                          {:x 2, :y 4}
-                          {:x 4, :y 4}
-                          {:x 6, :y 4}
-                          {:x 8, :y 4}]}}))
+                         [{:coords {:x 0, :y 4}}
+                          {:coords {:x 2, :y 4}}
+                          {:coords {:x 4, :y 4}}
+                          {:coords {:x 6, :y 4}}
+                          {:coords {:x 8, :y 4}}]}}))
 
 (def board-size (range 0 9))
 (def bench-size 4)
@@ -42,7 +42,7 @@
 
 (defn unit? [kind coords]
   (first (filter
-          #(= coords %)
+          #(= coords (:coords %))
           (kind (:cells (om/root-cursor app-state))))))
 
 (defn highlight-tile [e]
@@ -59,6 +59,8 @@
           (dom/div #js {:onClick #(highlight-tile %) :className "red-team"}))
         (if-let [blue-player (unit? :blue-team coords)]
           (dom/div #js {:className "blue-team"}))))))
+
+
 
 (defn board-view [app owner]
   (reify
@@ -77,7 +79,11 @@
               (om/transact! app [:cells :red-team]
                 (fn [units]
                   (map
-                   #(if (= selected %) target %)
+                   #(if (and
+                         (= selected (:coords %))
+                         (<= (reduce + (map (fn [a b] (Math/abs (- b a))) (vals target) (vals selected))) (:distance %)))
+                      (conj % {:coords target})
+                      %)
                    units)))))
           (recur)))))
 
