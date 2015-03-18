@@ -43,59 +43,26 @@
 (defn coords [m]
   (dissoc m :move))
 
-(defn red-unit? [x y]
-  (let [{:keys [:red-team]} (:cells (om/root-cursor app-state))]
-    (first (filter #(and
-             (= x (:x %))
-             (= y (:y %)))
-           red-team))))
-
-(defn blue-unit? [x y]
-  (let [{:keys [:blue-team]} (:cells (om/root-cursor app-state))]
-    (first (filter #(and
-             (= x (:x %))
-             (= y (:y %)))
-           blue-team))))
-
-(defn ball? [x y]
-  (let [{:keys [:balls]} (:cells (om/root-cursor app-state))]
-    (first (filter #(and
-             (= x (:x %))
-             (= y (:y %)))
-           balls))))
+(defn unit? [kind x y]
+  (first (filter #(and
+           (= x (:x %))
+           (= y (:y %)))
+         (kind (:cells (om/root-cursor app-state))))))
 
 (defn highlight-tile [e]
  (set! (.. e -target -style -background) "gray"))
-
-(defn player-view [cursor owner]
-  (reify
-    om/IRenderState
-    (render-state [this {:keys [move]}]
-      (dom/div #js {:onClick #(highlight-tile %) :className "red-team"}))))
-
-(defn opponent-view [cursor owner]
-  (reify
-    om/IRender
-    (render [_]
-      (dom/div #js {:className "blue-team"}))))
-
-(defn ball-view [cursor owner]
-  (reify
-    om/IRender
-    (render [_]
-      (dom/div #js {:className "ball"}))))
 
 (defn tile-view [cursor owner]
   (reify
     om/IRenderState
     (render-state [this {:keys [x y move] :as position}]
       (dom/td #js {:onClick #(put! move position)}
-        (if-let [ball (ball? x y)]
-          (om/build ball-view ball {:state {:move move}}))
-        (if-let [red-player (red-unit? x y)]
-          (om/build player-view red-player))
-        (if-let [blue-player (blue-unit? x y)]
-          (om/build opponent-view blue-player))))))
+        (if-let [ball (unit? :balls x y)]
+          (dom/div #js {:className "ball"}))
+        (if-let [red-player (unit? :red-team x y)]
+          (dom/div #js {:onClick #(highlight-tile %) :className "red-team"}))
+        (if-let [blue-player (unit? :blue-team x y)]
+          (dom/div #js {:className "blue-team"}))))))
 
 (defn board-view [app owner]
   (reify
@@ -109,7 +76,7 @@
        (go (loop []
           (let [selected (coords (<! move))
                 target (coords (<! move))]
-            (if (red-unit? apply target)
+            (if (unit? :red-team apply target)
               (println "CAN'T MOVE THERE")
               (om/transact! app [:cells :red-team]
                 (fn [units]
