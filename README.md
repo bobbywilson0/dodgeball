@@ -11,7 +11,7 @@ Each player rolls, and the higher rolling player gets the ball. A ball must be b
 ## Actions 
 
 ### Movement
-Roll the dice and move that many spaces on the board.
+Movement is based on the players attributes, but is a flat value (e.g. if your player has 6 movement the player can always move 6 spaces).
 
 ### Pickup ball
 A player directly in front of a ball can pick it up. A ball may be held for 3 turns, then it must be thrown.
@@ -24,25 +24,25 @@ A player can choose to not take an action.
 
 ## Turn
 
-A turn is completed when any two total actions are performed for your team. Actions can be any combination of two.
+A turn is completed when any two total actions are performed for your team. Actions can be any combination of two. The amount of actions can be modified by an ability, but by default a coach gets two actions.
 
 ## Combat
 
-Attacking player rolls dice once for distance and again for accuracy. If the distance is far enough to hit the defender, the defender rolls a die to see if they dodge, catch, or get hit by the ball. Attacker rolls first, then defender.
+Attacking coach uses the player's "throwing distance" attribute to see if their player is range. If the attacking player is in range the attacking coach rolls the die to see if they hit the defending player. The defending coach rolls a first dice to see if they catch the ball (if the defending player has a "catch" attribute greater than zero), and then rolls again to see if the player dodges the ball (this is based on the "dodge" attribute). If the attacking dice is greater than the defending dice it is a hit, otherwise it's a dodge, and tie goes to the defender.
 
 ### Combat Results
 
 HIT: Attacker rolls higher than defender. Defending player is out. 
 
-Example: Attacker rolls 6, defender rolls 4.
+Example: Attacker rolls 6, defender rolls 1 for catch, defender rolls 4.
 
 MISS: Attacker rolls lower than defender. The ball lands how ever many spaces forward was rolled.
 
-Example: Attacker rolls 3, defender rolls  2.
+Example: Attacker rolls 3, denfender rolls 1 for catch, defender rolls  5.
 
-CATCH: Defender rolls same as attacker. Attacking player is out, defender keeps ball. 
+CATCH: Defender rolls catch dice and matches their percentage. Attacking player is out, defender keeps ball and releases one player on their team who is "out". 
 
-Example: Attacker rolls 5, defender rolls 5.
+Example: Defender rolls catch dice of 10 on a 10 sided die.
 
 ## Winning
 
