@@ -57,3 +57,17 @@ Catch | 10%
 *Lucky Lee*
 
 When perfoming an action with Leeroy you get a bonus action, resulting in a total of 3 actions per turn. 
+
+## Carlos
+
+Attribute | Value
+----------|------
+movement  | 8
+throw range | 8
+attack | 9
+defense | 4
+Catch | 0%
+
+*Skillshot*
+
+Upon hit coach chooses the bounce direction of the ball, the magnitude of bounce is still a 3 roll.
