@@ -26,7 +26,7 @@ attack | 8
 defense | 6
 Catch | 10%
 
-*Double fisting*
+*Double Trouble*
 
 Joe holds two balls, doubling his defense points, but reducing his catch to zero. He can also attack with both balls, but one action will be charged for each attack.
 
