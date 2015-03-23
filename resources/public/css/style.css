@@ -87,3 +87,7 @@ tr.middle-top {
   width: 50px;
   height: 50px;
 }
+
+.selected {
+  background-color: gray;
+}

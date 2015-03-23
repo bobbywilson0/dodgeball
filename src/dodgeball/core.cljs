@@ -9,33 +9,35 @@
 (defonce app-state (atom
                     {:cells
                         {:blue-team
-                         [{:coords {:x 0, :y 0}}
-                          {:coords {:x 2, :y 0}}
-                          {:coords {:x 4, :y 0}}
-                          {:coords {:x 6, :y 0}}
-                          {:coords {:x 8, :y 0}}]
+                         [{:coords {:x 1  :y 0}}
+                          {:coords {:x 3 :y 0}}
+                          {:coords {:x 5 :y 0}}
+                          {:coords {:x 7 :y 0}}
+                          {:coords {:x 9 :y 0}}]
                         :red-team
-                         [{:coords {:x 0, :y 8}}
-                          {:coords {:x 2, :y 8}}
-                          {:coords {:x 4, :y 8}}
-                          {:coords {:x 6, :y 8}}
-                          {:coords {:x 8, :y 8}}]
+                          [{:coords {:x 1, :y 10}}
+                          {:coords {:x 3, :y 10}}
+                          {:coords {:x 5, :y 10}}
+                          {:coords {:x 7, :y 10}}
+                          {:coords {:x 9, :y 10}}]
                         :balls
-                         [{:coords {:x 0, :y 4}}
-                          {:coords {:x 2, :y 4}}
-                          {:coords {:x 4, :y 4}}
-                          {:coords {:x 6, :y 4}}
-                          {:coords {:x 8, :y 4}}]}
+                         [{:coords {:x 1  :y 5}}
+                          {:coords {:x 3 :y 5}}
+                          {:coords {:x 5 :y 5}}
+                          {:coords {:x 7 :y 5}}
+                          {:coords {:x 9 :y 5}}]}
                      :turn :blue-team
                      :actions 0}))
 
-(def board-size (range 0 9))
+(def board-length (range 0 11))
+(def board-width (range 0 9))
+
 (def bench-size 4)
 (def move-range 6)
 
 (defn border-top [y]
   (cond
-    (or (= y 3) (= y 6)) "middle-top"))
+    (or (= y 4) (= y 7)) "middle-top"))
 
 (defn bench []
   ( dom/table nil
@@ -48,25 +50,27 @@
           #(= coords (:coords %))
           (kind (:cells (om/root-cursor app-state))))))
 
-(defn highlight-tile [e]
-  ;(om/transact! (om/root-cursor app-state) [:cells (]
- (set! (.. e -target -style -background) "gray"))
+(defn select-class [owner unit]
+  (if (=
+       (:coords unit)
+       (:coords (om/get-state owner :selected-unit)))
+    "selected"))
 
 (defn tile-view [cursor owner]
   (reify
     om/IRenderState
-    (render-state [this {:keys [coords move] :as position}]
-      (dom/td #js {:onClick #(put! move position)}
+    (render-state [this {:keys [coords move] :as unit}]
+      (dom/td #js {:onClick #(put! move unit)}
         (if-let [ball (unit? :balls coords)]
           (dom/div #js {:className "ball"}))
         (if-let [red-player (unit? :red-team coords)]
           (dom/div
-           #js {:onClick #(highlight-tile %)
-           :className "red-team"}))
+           #js {
+           :className (str "red-team" " " (select-class owner unit))}))
         (if-let [blue-player (unit? :blue-team coords)]
           (dom/div
-           #js {:onClick #(highlight-tile %)
-           :className "blue-team"}))))))
+           #js {
+           :className (str "blue-team" " " (select-class owner unit))}))))))
 
 (defn distance [a b]
   (Math/abs (- b a)))
@@ -105,12 +109,11 @@
           (let [selected (:coords (<! move))]
             (om/set-state! owner :selected-unit (first (filter #(= selected (:coords %)) ((:turn app) (:cells @app-state)))))
             (let [target (:coords (<! move))]
-              (println (om/get-state owner :selected-unit))
             (if (or
                  (unit? (:turn app) target)
                  (not (in-range? target selected)))
-              (println "CAN'T MOVE THERE")
-              (om/transact!
+              (om/set-state! owner :selected-unit nil)
+               (om/transact!
                app
                [:cells (:turn app)]
                (fn [units]
@@ -129,11 +132,11 @@
         (om/build action-view (:actions app))
         (bench)
         (apply dom/table nil
-          (vec (for [y board-size]
+          (vec (for [y board-length]
             (apply dom/tr #js {:className (border-top y)}
-              (vec (for [x board-size]
+              (vec (for [x board-length]
                 (om/build tile-view app
-                  {:state {:move move :coords {:x x :y y}}})))))))
+                  {:state {:selected-unit (om/get-state owner :selected-unit) :move move :coords {:x x :y y}}})))))))
         (bench)))))
 
 (om/root board-view app-state
