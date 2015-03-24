@@ -95,6 +95,13 @@
     (render [_]
       (dom/h2 nil (str "Actions: " data)))))
 
+(defn flip-team [app]
+  (om/update! app :actions 0)
+  (if (= (:turn @app) :red-team)
+    (om/update! app :turn :blue-team)
+    (om/update! app :turn :red-team)))
+
+
 (defn board-view [app owner]
   (reify
     om/IInitState
@@ -107,29 +114,33 @@
      (let [move (om/get-state owner :move)]
        (go (loop []
           (let [selected (:coords (<! move))]
-            (om/set-state! owner :selected-unit (first (filter #(= selected (:coords %)) ((:turn app) (:cells @app-state)))))
+            (om/set-state! owner :selected-unit (first (filter #(= selected (:coords %)) ((:turn @app) (:cells @app)))))
             (let [target (:coords (<! move))]
             (if (or
-                 (unit? (:turn app) target)
+                 (unit? (:turn @app) target)
                  (not (in-range? target selected)))
               (om/set-state! owner :selected-unit nil)
                (om/transact!
                app
-               [:cells (:turn app)]
+               [:cells (:turn @app)]
                (fn [units]
                   (map
                    #(if (= (om/get-state owner :selected-unit) %)
-                      {:coords target}
+                      ((fn []
+                        (om/transact! app :actions inc)
+                         (cond (= (:actions @app) 2)
+                           (flip-team app))
+                         {:coords target}))
                       %)
                    units))))
-              (om/transact! app :actions (fn [a] (inc a)))))
+              ))
           (recur)))))
 
     om/IRenderState
     (render-state [this {:keys [move]}]
       (dom/div #js {:className "container"}
-        (om/build turn-view (:turn app))
-        (om/build action-view (:actions app))
+        (om/build turn-view (:turn @app))
+        (om/build action-view (:actions @app))
         (bench)
         (apply dom/table nil
           (vec (for [y board-length]
