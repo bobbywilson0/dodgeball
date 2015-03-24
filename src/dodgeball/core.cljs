@@ -59,8 +59,8 @@
 (defn tile-view [cursor owner]
   (reify
     om/IRenderState
-    (render-state [this {:keys [coords move] :as unit}]
-      (dom/td #js {:onClick #(put! move unit)}
+    (render-state [this {:keys [coords actions] :as unit}]
+      (dom/td #js {:onClick #(put! actions unit)}
         (if-let [ball (unit? :balls coords)]
           (dom/div #js {:className "ball"}))
         (if-let [red-player (unit? :red-team coords)]
@@ -76,12 +76,19 @@
   (Math/abs (- b a)))
 
 (defn in-range? [target selected]
-  (<=
-   (reduce
-    +
-    (map distance (vals target) (vals selected)))
-   move-range))
-
+  (and
+   (or
+     (and
+      (= :blue-team (:turn @app-state))
+      (<= (:y target) 7))
+     (and
+      (= :red-team (:turn @app-state))
+      (>= (:y target) 4)))
+   (<=
+    (reduce
+     +
+     (map distance (vals target) (vals selected)))
+    move-range)))
 
 (defn turn-view [data owner]
   (reify
@@ -106,23 +113,23 @@
   (reify
     om/IInitState
     (init-state [_]
-      {:move (chan)
+      {:actions (chan)
        :selected-unit nil})
 
     om/IWillMount
     (will-mount [_]
-     (let [move (om/get-state owner :move)]
+     (let [actions (om/get-state owner :actions)]
        (go (loop []
-          (let [selected (:coords (<! move))]
-            (om/set-state! owner :selected-unit (first (filter #(= selected (:coords %)) ((:turn @app) (:cells @app)))))
-            (let [target (:coords (<! move))]
+          (let [selected (:coords (<! actions))]
+            (om/set-state! owner :selected-unit (first (filter #(= selected (:coords %)) ((:turn @app-state) (:cells @app-state)))))
+            (let [target (:coords (<! actions))]
             (if (or
-                 (unit? (:turn @app) target)
+                 (unit? (:turn @app-state) target)
                  (not (in-range? target selected)))
               (om/set-state! owner :selected-unit nil)
                (om/transact!
                app
-               [:cells (:turn @app)]
+               [:cells (:turn @app-state)]
                (fn [units]
                   (map
                    #(if (= (om/get-state owner :selected-unit) %)
@@ -132,12 +139,11 @@
                            (flip-team app))
                          {:coords target}))
                       %)
-                   units))))
-              ))
+                   units))))))
           (recur)))))
 
     om/IRenderState
-    (render-state [this {:keys [move]}]
+    (render-state [this {:keys [actions]}]
       (dom/div #js {:className "container"}
         (om/build turn-view (:turn @app))
         (om/build action-view (:actions @app))
@@ -147,7 +153,7 @@
             (apply dom/tr #js {:className (border-top y)}
               (vec (for [x board-length]
                 (om/build tile-view app
-                  {:state {:selected-unit (om/get-state owner :selected-unit) :move move :coords {:x x :y y}}})))))))
+                  {:state {:selected-unit (om/get-state owner :selected-unit) :actions actions :coords {:x x :y y}}})))))))
         (bench)))))
 
 (om/root board-view app-state
