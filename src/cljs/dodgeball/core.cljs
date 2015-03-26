@@ -193,7 +193,7 @@
   (go
    (loop []
      (let [event (<! action-queue)]
-       (println event)
+       ;(println event)
        (case (:type event)
          :select-unit   (select-unit app owner (:coords event))
          :deselect-unit (deselect-unit owner)
