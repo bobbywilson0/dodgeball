@@ -1,5 +1,5 @@
 (defproject dodgeball "0.1.0-SNAPSHOT"
-  :description "FIXME: write description"
+  :description "FIXME: write this!"
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
@@ -16,6 +16,7 @@
                  [compojure "1.3.1"]
                  [enlive "1.1.5"]
                  [om "0.8.0-rc1"]
+                 [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                  [environ "1.0.0"]]
 
   :plugins [[lein-cljsbuild "1.0.3"]
@@ -72,3 +73,4 @@
                                              :compiler
                                              {:optimizations :advanced
                                               :pretty-print false}}}}}})
+

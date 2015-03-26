@@ -1,91 +1,53 @@
-# dodgeball
+# Dodgeball
 
+## Beginning the game
 
-## Development
+Balls are placed at every other square on the middle row of the board. Players are placed in front of each ball on their respective sides. Each player rolls, the highest roll goes first. 
 
-Open a terminal and type `lein repl` to start a Clojure REPL
-(interactive prompt).
+## Opening Rush
 
-In the REPL, type
+Each player rolls, and the higher rolling player gets the ball. A ball must be brought back to baseline to activate the ball as live. All balls must be picked up before the first ball can be thrown.
 
-```clojure
-(run)
-(browser-repl)
-```
+## Actions 
 
-The call to `(run)` does two things, it starts the webserver at port
-10555, and also the Figwheel server which takes care of live reloading
-ClojureScript code and CSS. Give them some time to start.
+### Movement
+Movement is based on the players attributes, but is a flat value (e.g. if your player has 6 movement the player can always move 6 spaces).
 
-Running `(browser-repl)` starts the Weasel REPL server, and drops you
-into a ClojureScript REPL. Evaluating expressions here will only work
-once you've loaded the page, so the browser can connect to Weasel.
+### Pickup ball
+A player directly in front of a ball can pick it up. A ball may be held for 3 turns, then it must be thrown.
 
-When you see the line `Successfully compiled "resources/public/app.js"
-in 21.36 seconds.`, you're ready to go. Browse to
-`http://localhost:10555` and enjoy.
+### Throw
+A player holding a ball can throw it (see: combat).
 
-**Attention: It is not longer needed to run `lein figwheel`
-  separately. This is now taken care of behind the scenes**
+### No action
+A player can choose to not take an action.
 
-## Trying it out
+## Turn
 
-If all is well you now have a browser window saying 'Hello Chestnut',
-and a REPL prompt that looks like `cljs.user=>`.
+A turn is completed when any two total actions are performed for your team. Actions can be any combination of two. The amount of actions can be modified by an ability, but by default a coach gets two actions.
 
-Open `resources/public/css/style.css` and change some styling of the
-H1 element. Notice how it's updated instantly in the browser.
+## Combat
 
-Open `src/cljs/dodgeball/core.cljs`, and change `dom/h1` to
-`dom/h2`. As soon as you save the file, your browser is updated.
+Attacking coach uses the player's "throwing distance" attribute to see if their player is range. If the attacking player is in range the attacking coach rolls the die to see if they hit the defending player. The defending coach rolls a first dice to see if they catch the ball (if the defending player has a "catch" attribute greater than zero), and then rolls again to see if the player dodges the ball (this is based on the "dodge" attribute). If the attacking dice is greater than the defending dice it is a hit, otherwise it's a dodge, and tie goes to the defender.
 
-In the REPL, type
+### Combat Results
 
-```
-(ns dodgeball.core)
-(swap! app-state assoc :text "Interactivity FTW")
-```
+HIT: Attacker rolls higher than defender. Defending player is out. 
 
-Notice again how the browser updates.
+Example: Attacker rolls 6, defender rolls 1 for catch, defender rolls 4.
 
-## Deploying to Heroku
+MISS: Attacker rolls lower than defender. The ball lands how ever many spaces forward was rolled.
 
-This assumes you have a
-[Heroku account](https://signup.heroku.com/dc), have installed the
-[Heroku toolbelt](https://toolbelt.heroku.com/), and have done a
-`heroku login` before.
+Example: Attacker rolls 3, denfender rolls 1 for catch, defender rolls  5.
 
-``` sh
-git init
-git add -A
-git commit
-heroku create
-git push heroku master:master
-heroku open
-```
+CATCH: Defender rolls catch dice and matches their percentage. Attacking player is out, defender keeps ball and releases one player on their team who is "out". 
 
-## Running with Foreman
+Example: Defender rolls catch dice of 10 on a 10 sided die.
 
-Heroku uses [Foreman](http://ddollar.github.io/foreman/) to run your
-app, which uses the `Procfile` in your repository to figure out which
-server command to run. Heroku also compiles and runs your code with a
-Leiningen "production" profile, instead of "dev". To locally simulate
-what Heroku does you can do:
+## Winning
 
-``` sh
-lein with-profile -dev,+production uberjar && foreman start
-```
+Once you get an entire team out, you have won that game.
 
-Now your app is running at
-[http://localhost:5000](http://localhost:5000) in production mode.
+## Ball position
 
-## License
-
-Copyright © 2014 FIXME
-
-Distributed under the Eclipse Public License either version 1.0 or (at
-your option) any later version.
-
-## Chestnut
-
-Created with [Chestnut](http://plexus.github.io/chestnut/) 0.7.0.
+Balls land the distance that was rolled in the direction thrown. E.g. if a ball was thrown straight ahead 4 spaces but the opposing player is 5 spaces away, that ball now sits directly in front of the opposing player. If a ball travels beyond the distance of the court it is placed back in the middle. If a player is hit, the ball drops in that players spot. 
