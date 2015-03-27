@@ -23,7 +23,9 @@
                        {:coords {:x 3 :y 5}}
                        {:coords {:x 5 :y 5}}
                        {:coords {:x 7 :y 5}}
-                       {:coords {:x 9 :y 5}}]}}))
+                       {:coords {:x 9 :y 5}}]}
+                     :actions 0
+                     :turn :blue-team}))
 
 (def board-length (range 0 11))
 (def board-width (range 0 9))
@@ -62,10 +64,10 @@
   (and
    (or
      (and
-      (= :blue-team (om/get-state owner :turn))
+      (= :blue-team (:turn @app-state))
       (<= (:y target) 7))
      (and
-      (= :red-team (om/get-state owner :turn))
+      (= :red-team (:turn @app-state))
       (>= (:y target) 4)))
    (<=
     (reduce
@@ -78,7 +80,7 @@
     (cond
      (and
        (= nil selected)
-       (unit? (om/get-state owner :turn) target))
+       (unit? (:turn @app-state) target))
      :select-unit
 
      (unit? :balls target)
@@ -88,7 +90,7 @@
      :move-unit
 
      (or
-       (unit? (om/get-state owner :turn) target)
+       (unit? (:turn @app-state) target)
        (not (in-range? target selected owner)))
      :deselect-unit)))
 
@@ -125,11 +127,11 @@
     (render [_]
       (dom/h2 nil (str "Actions: " data)))))
 
-(defn flip-team [owner]
-  (om/set-state! owner :actions 0)
-  (if (= (om/get-state owner :turn) :red-team)
-    (om/set-state! owner :turn :blue-team)
-    (om/set-state! owner :turn :red-team)))
+(defn flip-team [app owner]
+  (om/update! app :actions 0)
+  (if (= (:turn @app-state) :red-team)
+    (om/update! app :turn :blue-team)
+    (om/update! app :turn :red-team)))
 
 (defn deselect-unit [owner]
   (om/set-state! owner :selected-unit nil))
@@ -141,24 +143,24 @@
     (:x (:coords unit-coords)))
    (or
     (and
-     (= (om/get-state owner :turn) :blue-team)
+     (= (:turn @app-state) :blue-team)
      (= (:y (:coords unit-coords)) (dec (:y ball-coords))))
     (and
-     (= (om/get-state owner :turn) :red-team)
+     (= (:turn @app-state) :red-team)
      (= (:y (:coords unit-coords)) (inc (:y ball-coords)))))))
 
 (defn move-unit [app owner target]
   (om/transact!
    app
-   [:cells (om/get-state owner :turn)]
+   [:cells (:turn @app-state)]
    (fn [units]
      (map
       #(if (= (:coords (om/get-state owner :selected-unit)) (:coords %))
          ((fn []
-            (om/update-state! owner :actions inc)
+            (om/transact! app :actions inc)
             (om/set-state! owner :selected-unit nil)
-            (cond (= (om/get-state owner :actions) 2)
-                  (flip-team owner))
+            (cond (= (:actions @app-state) 2)
+                  (flip-team app owner))
             {:coords target}))
          %)
       units))))
@@ -172,10 +174,10 @@
      (map
       #(if (ball-in-front-of-unit? ball selected owner)
          ((fn []
-            (om/update-state! owner :actions inc)
+            (om/transact! app :actions inc)
             (om/set-state! owner :selected-unit nil)
-            (cond (= (om/get-state owner :actions) 2)
-                  (flip-team owner))
+            (cond (= (:actions @app-state) 2)
+                  (flip-team app owner))
             {:coords selected}))
          %)
       units)))))
@@ -187,7 +189,7 @@
    (first
     (filter
      #(= selected (:coords %))
-     ((om/get-state owner :turn) (:cells @app-state))))))
+     ((:turn @app-state) (:cells @app-state))))))
 
 (defn handle-action [app owner action-queue]
   (go
@@ -203,23 +205,22 @@
        (recur)))))
 
 (defn board-view [app owner]
+  (println @app-state)
   (reify
     om/IInitState
     (init-state [_]
       {:action-queue (chan)
-       :selected-unit nil
-       :actions 0
-       :turn :blue-team})
+       :selected-unit nil})
 
     om/IWillMount
     (will-mount [_]
     (handle-action app owner (om/get-state owner :action-queue)))
 
     om/IRenderState
-    (render-state [this {:keys [action-queue actions turn]}]
+    (render-state [this {:keys [action-queue]}]
       (dom/div #js {:className "container"}
-        (om/build turn-view (om/get-state owner :turn))
-        (om/build action-view (om/get-state owner :actions))
+        (om/build turn-view (:turn @app-state))
+        (om/build action-view (:actions @app-state))
         (bench)
         (apply dom/table nil
           (vec (for [y board-length]
@@ -229,8 +230,6 @@
                   {:state
                    {:selected-unit (om/get-state owner :selected-unit)
                     :action-queue action-queue
-                    :actions actions
-                    :turn turn
                     :coords {:x x :y y}}})))))))
         (bench)))))
 

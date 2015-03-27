@@ -71,13 +71,16 @@ tr.middle-top {
 }
 
 .red-team {
-  background-color: red;
+  background: url('../images/front-noball.gif') no-repeat;
+    background-position: 50% 50%;
+
   width: 50px;
   height: 50px;
 }
 
 .blue-team {
-  background-color: blue;
+  background: url('../images/front-noball.gif') no-repeat;
+  background-position: 50% 50%;
   width: 50px;
   height: 50px;
 }
