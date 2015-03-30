@@ -1,6 +1,6 @@
-(ns dodgeball-r.repl
-  (:use dodgeball-r.handler
-        dodgeball-r.dev
+(ns dodgeball.repl
+  (:use dodgeball.handler
+        dodgeball.dev
         ring.server.standalone
         [ring.middleware file-info file]))
 

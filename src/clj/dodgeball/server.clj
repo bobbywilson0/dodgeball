@@ -1,5 +1,5 @@
-(ns dodgeball-r.server
-  (:require [dodgeball-r.handler :refer [app]]
+(ns dodgeball.server
+  (:require [dodgeball.handler :refer [app]]
             [ring.adapter.jetty :refer [run-jetty]])
   (:gen-class))
 

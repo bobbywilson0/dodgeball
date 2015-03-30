@@ -1,5 +1,5 @@
-(ns ^:figwheel-no-load dodgeball-r.dev
-  (:require [dodgeball-r.core :as core]
+(ns ^:figwheel-no-load dodgeball.dev
+  (:require [dodgeball.core :as core]
             [figwheel.client :as figwheel :include-macros true]
             [weasel.repl :as weasel]
             [reagent.core :as r]))

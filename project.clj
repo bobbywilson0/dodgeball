@@ -1,4 +1,4 @@
-(defproject dodgeball-r "0.1.0-SNAPSHOT"
+(defproject dodgeball "0.1.0-SNAPSHOT"
   :description "FIXME: write description"
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
@@ -26,14 +26,14 @@
             [lein-ring "0.9.1"]
             [lein-asset-minifier "0.2.2"]]
 
-  :ring {:handler dodgeball-r.handler/app
-         :uberwar-name "dodgeball-r.war"}
+  :ring {:handler dodgeball.handler/app
+         :uberwar-name "dodgeball.war"}
 
   :min-lein-version "2.5.0"
 
-  :uberjar-name "dodgeball-r.jar"
+  :uberjar-name "dodgeball.jar"
 
-  :main dodgeball-r.server
+  :main dodgeball.server
 
   :clean-targets ^{:protect false} ["resources/public/js"]
 
@@ -48,7 +48,7 @@
                                         :optimizations :none
                                         :pretty-print  true}}}}
 
-  :profiles {:dev {:repl-options {:init-ns dodgeball-r.repl
+  :profiles {:dev {:repl-options {:init-ns dodgeball.repl
                                   :nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}
 
                    :dependencies [[ring-mock "0.1.5"]
@@ -68,12 +68,12 @@
                    :figwheel {:http-server-root "public"
                               :server-port 3449
                               :css-dirs ["resources/public/css"]
-                              :ring-handler dodgeball-r.handler/app}
+                              :ring-handler dodgeball.handler/app}
 
                    :env {:dev? true}
 
                    :cljsbuild {:builds {:app {:source-paths ["env/dev/cljs"]
-                                              :compiler {   :main "dodgeball-r.dev"
+                                              :compiler {   :main "dodgeball.dev"
                                                          :source-map true}}
 }
 }}

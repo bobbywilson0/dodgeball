@@ -1,4 +1,4 @@
-(ns dodgeball-r.dev
+(ns dodgeball.dev
   (:require [cemerick.piggieback :as piggieback]
             [weasel.repl.websocket :as weasel]
             [leiningen.core.main :as lein]))
