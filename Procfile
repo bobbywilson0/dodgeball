@@ -1,1 +1,1 @@
-web: java $JVM_OPTS -cp target/dodgeball.jar clojure.main -m dodgeball.server
+web: java $JVM_OPTS -cp target/dodgeball-r.jar clojure.main -m dodgeball-r.server
