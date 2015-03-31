@@ -42,36 +42,37 @@
 
 (defn determine-action [x y]
   (println (unit/selected-unit))
-  (cond
-   (and
-    (= nil (unit/selected-unit))
-    (boolean (unit/unit? x y (:turn @state/game))))
-   {:type   :select-unit
-    :id     (:id (unit/unit? x y (:turn @state/game)))
-    :coords {:x x :y y}}
+  (let [team-unit (unit/unit? x y (:turn @state/game))]
+    (cond
+     (and
+      (= nil (unit/selected-unit))
+      (boolean team-unit))
+     {:type   :select-unit
+      :id     (:id team-unit)
+      :coords {:x x :y y}}
 
-   (or
-     (boolean (unit/unit? x y (:turn @state/game)))
-     (not (unit/in-range? x y (:id (unit/selected-unit)))))
-   {:type   :deselect-unit
-    :id     (:id (unit/unit? x y (:turn @state/game)))
-    :coords {:x x :y y}}
+     (or
+       (boolean team-unit)
+       (not (unit/in-range? x y (:id (unit/selected-unit)))))
+     {:type   :deselect-unit
+      :id     (:id team-unit)
+      :coords {:x x :y y}}
 
-   (boolean (unit/unit? x y :balls))
-   {:type   :pickup-ball
-    :id     (:id (unit/unit? x y :balls))
-    :coords {:x x :y y}}
+     (boolean (unit/unit? x y :balls))
+     {:type   :pickup-ball
+      :id     (:id (unit/unit? x y :balls))
+      :coords {:x x :y y}}
 
-   (boolean (unit/unit? x y (unit/defense)))
-   {:type :attack
-    :id (:id (unit/unit? x y (:turn @state/game)))
-    :coords {:x x :y y}}
+     (boolean (unit/unit? x y (unit/defense)))
+     {:type :attack
+      :id (:id team-unit)
+      :coords {:x x :y y}}
 
 
-   (unit/in-range? x y (:id (unit/unit? x y (:turn @state/game))))
-   {:type :move-unit
-    :id (:id (unit/unit? x y (:turn @state/game)))
-    :coords {:x x :y y}}
+     (unit/in-range? x y (:id team-unit))
+     {:type :move-unit
+      :id (:id team-unit)
+      :coords {:x x :y y}}
 
-   :else
-     (println x y (:turn @state/game))))
+     :else
+       (println x y (:turn @state/game)))))
