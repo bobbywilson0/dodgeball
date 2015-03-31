@@ -29,7 +29,7 @@
       {:id 3 :coords {:x 5 :y 5}}
       {:id 4 :coords {:x 7 :y 5}}
       {:id 5 :coords {:x 9 :y 5}}]}
-     :turn :blue-team
+     :turn :red-team
      :actions 0}))
 
 ;; -------------------------
@@ -37,9 +37,20 @@
 
 (def board-length (range 0 11))
 
+(def move-range 6)
+
 (defn border-top [y]
   (cond
     (or (= y 4) (= y 7)) "middle-top"))
+
+(defn switch-turns []
+  (if (= (:turn @game) :red-team)
+    (do
+      (swap! game assoc :turn :blue-team)
+      (swap! game assoc :actions 0))
+    (do
+      (swap! game assoc :turn :red-team)
+      (swap! game assoc :actions 0))))
 
 (defn all-unit-coords-for [unit-type]
   (get-in @game [:units unit-type]))
@@ -121,14 +132,30 @@
 (defn selected? [x y]
   (= {:x x :y y} (:coords (selected-unit))))
 
+(defn distance [a b]
+  (Math/abs (- b a)))
+
 
 (defn unit-class [x y]
+  (let [blue-unit (unit? x y :blue-team)
+        red-unit (unit? x y :red-team)
+        ball-unit (unit? x y :balls)]
   (str
     (cond
-     (unit? x y :blue-team)
+     (and
+      (boolean blue-unit)
+      (:ball blue-unit))
+     "blue-team-ball"
+
+     (boolean blue-unit)
      "blue-team"
 
-     (unit? x y :red-team)
+     (and
+      (boolean red-unit)
+      (:ball red-unit))
+     "red-team-ball"
+
+     (boolean red-unit)
      "red-team"
 
      (unit? x y :balls)
@@ -136,52 +163,52 @@
 
      (cond
       (selected? x y)
-      (str " " "selected"))))
+      (str " " "selected")))))
 
 (defn in-range? [x y id]
   (and
    (or
      (and
       (= :blue-team (:turn @game))
-      (<= (:y y) 7))
+      (<= y 7))
      (and
       (= :red-team (:turn @game))
-      (>= (:y y) 4)))
+      (>= y 4)))
    (<=
     (reduce
      +
-     (map distance [x y] (vals (:coords (active-team-unit-by-id id))))
-    move-range))))
+     (map distance [x y] (vals (:coords (active-team-unit-by-id id)))))
+    move-range)))
 
 (defn determine-action [x y]
-    (cond
-     (and
-      (= nil (selected-unit))
-      (unit? x y (:turn @game)))
-     {:type :select-unit
-      :id (:id (unit? x y (:turn @game)))
-      :coords {:x x :y y}}
+  (cond
+   (and
+    (= nil (selected-unit))
+    (unit? x y (:turn @game)))
+   {:type   :select-unit
+    :id     (:id (unit? x y (:turn @game)))
+    :coords {:x x :y y}}
 
-     (or
-       (unit? x y (:turn @game))
-       (not (in-range? x y (:id (selected-unit)))))
-     {:type :deselect-unit
-      :id (:id (unit? x y (:turn @game)))
-      :coords {:x x :y y}}
+   (or
+     (unit? x y (:turn @game))
+     (not (in-range? x y (:id (selected-unit)))))
+   {:type   :deselect-unit
+    :id     (:id (unit? x y (:turn @game)))
+    :coords {:x x :y y}}
 
-     (boolean (unit? x y :balls))
-     {:type :pickup-ball
-      :id (:id (unit? x y :balls))
-      :coords {:x x :y y}}
+   (boolean (unit? x y :balls))
+   {:type   :pickup-ball
+    :id     (:id (unit? x y :balls))
+    :coords {:x x :y y}}
 
 
-     (in-range? x y (:id (unit? x y (:turn @game))))
-     {:type :move-unit
-      :id (:id (unit? x y (:turn @game)))
-      :coords {:x x :y y}}
+   (in-range? x y (:id (unit? x y (:turn @game))))
+   {:type :move-unit
+    :id (:id (unit? x y (:turn @game)))
+    :coords {:x x :y y}}
 
-     :else
-       (println x y (:turn @game))))
+   :else
+     (println x y (:turn @game))))
 
 (defn game-board [{:keys [:actions]}]
   [:div
@@ -189,7 +216,8 @@
     [:h1 (:actions @game)]
     [:table
      (doall (for [y board-length]
-       [:tr {:key y :class (border-top y)}
+       [:tr {:key y
+             :class (border-top y)}
         (doall (for [x board-length]
            [:td {:key (str x y)
                  :class (unit-class x y)
@@ -212,11 +240,13 @@
           :move-unit     (do
                            (move-unit   (:x (:coords event)) (:y (:coords event)))
                            (swap! game update-in [:actions] inc)
-                           (deselect-unit))
+                           (deselect-unit)
+                           (if (= (:actions @game) 2) (switch-turns)))
           :pickup-ball   (do
                            (pickup-ball (:x (:coords event)) (:y (:coords event)))
                            (swap! game update-in [:actions] inc)
-                           (deselect-unit)))
+                           (deselect-unit)
+                           (if (= (:actions @game) 2) (switch-turns))))
        (recur))))))
 
 
