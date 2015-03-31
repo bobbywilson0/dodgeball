@@ -42,7 +42,7 @@
 
 (defn determine-action [x y]
   (println (unit/selected-unit))
-  (let [team-unit (unit/unit? x y (:turn @state/game))]
+  (let [team-unit (unit/unit-by-type x y (:turn @state/game))]
     (cond
      (and
       (= nil (unit/selected-unit))
@@ -55,22 +55,22 @@
        (boolean team-unit)
        (not (unit/in-range? x y (:id (unit/selected-unit))))
        (and
-         (not (boolean (unit/selected-unit)))
-         (boolean (unit/unit? x y (unit/defense)))))
+         (= nil (unit/selected-unit))
+         (boolean (unit/unit-by-type x y (unit/defense)))))
      {:type   :deselect-unit
       :id     (:id team-unit)
       :coords {:x x :y y}}
 
      (and
-       (boolean (unit/unit? x y :balls))
+       (boolean (unit/unit-by-type x y :balls))
        (boolean (unit/selected-unit)))
      {:type   :pickup-ball
-      :id     (:id (unit/unit? x y :balls))
+      :id     (:id (unit/unit-by-type x y :balls))
       :coords {:x x :y y}}
 
      (and
        (boolean (unit/selected-unit))
-       (boolean (unit/unit? x y (unit/defense))))
+       (boolean (unit/unit-by-type x y (unit/defense))))
      {:type :attack
       :id (:id team-unit)
       :coords {:x x :y y}}

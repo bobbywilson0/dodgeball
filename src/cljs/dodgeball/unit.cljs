@@ -19,7 +19,7 @@
 (defn all-unit-coords-for [unit-type]
   (get-in @state/game [:units unit-type]))
 
-(defn unit? [x y unit-type]
+(defn unit-by-type [x y unit-type]
   (first
    (filter #(= {:x x :y y} (:coords %)) (all-unit-coords-for unit-type))))
 
@@ -64,11 +64,17 @@
 (defn attack [x y]
   (let [selected-unit (selected-unit)
         updated-unit  (conj selected-unit {:ball false})
-        defense-unit  (unit? x y (defense))
-        team          (filter #(not= selected-unit %) (active-team))]
+        defense-unit  (unit-by-type x y (defense))
+        offense-team  (filter #(not= selected-unit %) (active-team))
+        defense-team  (filter #(not= defense-unit %) (all-unit-coords-for (defense)))]
     (do
-      (swap! state/game assoc-in [:units (:turn @state/game)] (conj team updated-unit))
-      (println "Attack: " (rand-int 8) "Defense: " (rand-int 8)))))
+      (println "Attack: " (rand-int 8) "Defense: " (rand-int 8))
+      (if (<= (rand-int 8) (rand-int 8))
+        (swap! state/game assoc-in [:units (:turn @state/game)] (conj offense-team updated-unit))
+        (do
+          (swap! state/game assoc-in [:units (:turn @state/game)] (conj offense-team updated-unit))
+          (println defense-team)
+          (swap! state/game assoc-in [:units (defense)] defense-team))))))
 
 (defn ball-in-front-of-unit? [ball unit]
   (let [ball-x (:x (:coords ball))
@@ -90,7 +96,7 @@
 
 (defn pickup-ball [x y]
   (let [selected-unit (selected-unit)
-        ball          (unit? x y :balls)
+        ball          (unit-by-type x y :balls)
         updated-unit  (conj selected-unit {:ball true})
         team          (filter #(not= selected-unit %) (active-team))]
     (if (ball-in-front-of-unit? ball selected-unit)
@@ -103,9 +109,9 @@
 
 
 (defn unit-class [x y]
-  (let [blue-unit (unit? x y :blue-team)
-        red-unit  (unit? x y :red-team)
-        ball-unit (unit? x y :balls)]
+  (let [blue-unit (unit-by-type x y :blue-team)
+        red-unit  (unit-by-type x y :red-team)
+        ball-unit (unit-by-type x y :balls)]
   (str
     (cond
      (and
@@ -124,12 +130,12 @@
      (boolean red-unit)
      "red-team"
 
-     (unit? x y :balls)
+     (boolean ball-unit)
      "ball")
 
-     (cond
-      (selected? x y)
-      (str " " "selected")))))
+   (cond
+    (selected? x y)
+    (str " " "selected")))))
 
 (defn in-range? [x y id]
   (and
