@@ -43,6 +43,11 @@
   (cond
     (or (= y 4) (= y 7)) "middle-top"))
 
+(defn defense []
+  (if (= (:turn @game) :red-team)
+    :blue-team
+    :red-team))
+
 (defn switch-turns []
   (if (= (:turn @game) :red-team)
     (do
@@ -92,14 +97,23 @@
     (swap! game assoc-in [:units (:turn @game)] (conj team updated-unit))))
 
 (defn move-unit [x y]
-    (let [selected-unit (selected-unit)
-        updated-unit
-        (conj
-         selected-unit
-         {:coords {:x x :y y}})
-        team
-        (filter #(not= selected-unit %) (active-team))]
-      (swap! game assoc-in [:units (:turn @game)] (conj team updated-unit))))
+  (let [selected-unit (selected-unit)
+      updated-unit
+      (conj
+       selected-unit
+       {:coords {:x x :y y}})
+      team
+      (filter #(not= selected-unit %) (active-team))]
+    (swap! game assoc-in [:units (:turn @game)] (conj team updated-unit))))
+
+(defn attack [x y]
+  (let [selected-unit (selected-unit)
+        updated-unit  (conj selected-unit {:ball false})
+        defense-unit  (unit? x y (defense))
+        team          (filter #(not= selected-unit %) (active-team))]
+    (do
+      (swap! game assoc-in [:units (:turn @game)] (conj team updated-unit))
+      (println "Attack: " (rand-int 8) "Defense: " (rand-int 8)))))
 
 (defn ball-in-front-of-unit? [ball unit]
   (let [ball-x (:x (:coords ball))
@@ -138,7 +152,7 @@
 
 (defn unit-class [x y]
   (let [blue-unit (unit? x y :blue-team)
-        red-unit (unit? x y :red-team)
+        red-unit  (unit? x y :red-team)
         ball-unit (unit? x y :balls)]
   (str
     (cond
@@ -184,13 +198,13 @@
   (cond
    (and
     (= nil (selected-unit))
-    (unit? x y (:turn @game)))
+    (boolean (unit? x y (:turn @game))))
    {:type   :select-unit
     :id     (:id (unit? x y (:turn @game)))
     :coords {:x x :y y}}
 
    (or
-     (unit? x y (:turn @game))
+     (boolean (unit? x y (:turn @game)))
      (not (in-range? x y (:id (selected-unit)))))
    {:type   :deselect-unit
     :id     (:id (unit? x y (:turn @game)))
@@ -201,11 +215,18 @@
     :id     (:id (unit? x y :balls))
     :coords {:x x :y y}}
 
+   (boolean (unit? x y (defense)))
+   {:type :attack
+    :id (:id (unit? x y (:turn @game)))
+    :coords {:x x :y y}}
+
 
    (in-range? x y (:id (unit? x y (:turn @game))))
    {:type :move-unit
     :id (:id (unit? x y (:turn @game)))
     :coords {:x x :y y}}
+
+
 
    :else
      (println x y (:turn @game))))
@@ -232,18 +253,25 @@
    (.getElementById js/document "app"))
   (go
    (loop []
-     (let [event (<! ch)]
+     (let [event (<! ch)
+           x (:x (:coords event))
+           y (:y (:coords event))]
        (println event)
         (case (:type event)
           :select-unit   (select-unit (:id event))
           :deselect-unit (deselect-unit)
           :move-unit     (do
-                           (move-unit   (:x (:coords event)) (:y (:coords event)))
+                           (move-unit x y)
                            (swap! game update-in [:actions] inc)
                            (deselect-unit)
                            (if (= (:actions @game) 2) (switch-turns)))
           :pickup-ball   (do
-                           (pickup-ball (:x (:coords event)) (:y (:coords event)))
+                           (pickup-ball x y)
+                           (swap! game update-in [:actions] inc)
+                           (deselect-unit)
+                           (if (= (:actions @game) 2) (switch-turns)))
+          :attack        (do
+                           (attack x y)
                            (swap! game update-in [:actions] inc)
                            (deselect-unit)
                            (if (= (:actions @game) 2) (switch-turns))))
