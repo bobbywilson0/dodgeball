@@ -41,7 +41,6 @@
          (recur)))))
 
 (defn determine-action [x y]
-  (println (unit/selected-unit))
   (let [team-unit (unit/unit-by-type x y (:turn @state/game))]
     (cond
      (and
