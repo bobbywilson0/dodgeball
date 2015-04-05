@@ -61,45 +61,6 @@
       (filter #(not= selected-unit %) (active-team))]
     (swap! state/game assoc-in [:units (:turn @state/game)] (conj team updated-unit))))
 
-(defn ball-deflect [x y]
-  (let [magnitude (+ 1 (rand-int 3))
-        dir (case
-              (+ 1 (rand-int 4))
-
-              1
-              (map #(* magnitude %) [0 -1])
-
-              2
-              (map #(* magnitude %) [-1 0])
-
-              3
-              (map #(* magnitude %) [1 0])
-
-              4
-              (map #(* magnitude %) [0 1]))]
-    (map + dir [x y])))
-
-
-(defn attack [x y]
-  (let [selected-unit (selected-unit)
-        updated-unit  (conj selected-unit {:ball false})
-        defense-unit  (unit-by-type x y (defense))
-        offense-team  (filter #(not= selected-unit %) (active-team))
-        defense-team  (filter #(not= defense-unit %) (all-unit-coords-for (defense)))
-        attack-points (+ 1 (rand-int 8))
-        defense-points (+ 1 (rand-int 8))]
-    (do
-      (if (<= attack-points defense-points)
-        (swap! state/game assoc-in [:units (:turn @state/game)] (conj offense-team updated-unit))
-        (do
-          (swap! state/game assoc-in [:units (:turn @state/game)] (conj offense-team updated-unit))
-          (swap! state/game assoc-in [:units (defense)] defense-team)
-          (println (all-unit-coords-for :balls) (ball-deflect (:x defense-unit)
-                                                                         (:y defense-unit)))
-          (swap! state/game assoc-in [:units :balls] (conj (all-unit-coords-for :balls)
-                                                           (ball-deflect (:x defense-unit)
-                                                                         (:y defense-unit)))))))))
-
 (defn ball-in-front-of-unit? [ball unit]
   (let [ball-x (:x (:coords ball))
         ball-y (:y (:coords ball))
@@ -121,7 +82,7 @@
 (defn pickup-ball [x y]
   (let [selected-unit (selected-unit)
         ball          (unit-by-type x y :balls)
-        updated-unit  (conj selected-unit {:ball true})
+        updated-unit  (conj selected-unit {:ball ball})
         team          (filter #(not= selected-unit %) (active-team))]
     (if (ball-in-front-of-unit? ball selected-unit)
       (do

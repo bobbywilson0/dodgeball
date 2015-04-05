@@ -1,7 +1,8 @@
 (ns dodgeball.actions
   (:require [reagent.core :as reagent :refer [atom]]
             [dodgeball.unit :as unit]
-            [dodgeball.state :as state])
+            [dodgeball.state :as state]
+            [dodgeball.combat :as combat])
   (:require-macros [cljs.core.async.macros :refer [go]]))
 
 (defn switch-turns []
@@ -34,7 +35,7 @@
                              (unit/deselect-unit)
                              (if (= (:actions @state/game) 2) (switch-turns)))
             :attack        (do
-                             (unit/attack x y)
+                             (combat/attack x y)
                              (swap! state/game update-in [:actions] inc)
                              (unit/deselect-unit)
                              (if (= (:actions @state/game) 2) (switch-turns))))
