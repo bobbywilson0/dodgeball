@@ -12,3 +12,4 @@ pom.xml.asc
 /.repl
 .DS_Store
 figwheel_server.log
+/.idea

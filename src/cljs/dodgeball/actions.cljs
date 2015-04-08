@@ -51,6 +51,13 @@
       :id     (:id team-unit)
       :coords {:x x :y y}}
 
+     (and
+       (boolean (unit/selected-unit))
+       (boolean (unit/unit-by-type x y (unit/defense))))
+     {:type :attack
+      :id (:id team-unit)
+      :coords {:x x :y y}}
+
      (or
        (boolean team-unit)
        (not (unit/in-range? x y (:id (unit/selected-unit))))
@@ -66,13 +73,6 @@
        (boolean (unit/selected-unit)))
      {:type   :pickup-ball
       :id     (:id (unit/unit-by-type x y :balls))
-      :coords {:x x :y y}}
-
-     (and
-       (boolean (unit/selected-unit))
-       (boolean (unit/unit-by-type x y (unit/defense))))
-     {:type :attack
-      :id (:id team-unit)
       :coords {:x x :y y}}
 
 

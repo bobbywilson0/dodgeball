@@ -22,5 +22,8 @@
       {:id 3 :coords {:x 5 :y 5}}
       {:id 4 :coords {:x 7 :y 5}}
       {:id 5 :coords {:x 9 :y 5}}]}
+     :benches
+     {:blue-team []
+     :red-team []}
      :turn :red-team
      :actions 0}))

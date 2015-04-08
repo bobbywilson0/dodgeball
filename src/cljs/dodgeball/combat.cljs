@@ -36,7 +36,11 @@
       (reset-ball (get-in (unit/selected-unit) [:ball :id]))
       (zipmap [:x :y] (map + dir [x y])))))
 
-(defn miss [updated-unit offense-team defense-team]
+(defn slope [unit]
+  (map - (vals (:coords unit)) (vals (:coords (unit/selected-unit)))))
+
+(defn miss [updated-unit offense-team defense-team defense-unit]
+  (println (slope defense-unit))
   (swap! state/game assoc-in [:units :balls] (conj (get-in @state/game [:units :balls]) (:ball (unit/selected-unit))))
   (swap! state/game assoc-in [:units (:turn @state/game)] (conj offense-team updated-unit)))
 
@@ -56,15 +60,7 @@
         defense-team   (defense-team-without defense-unit)]
     (println "attack dice: " attack-points "defense dice: " defense-points)
     (if (<= attack-points defense-points)
-      (miss updated-unit offense-team defense-team)
+      (miss updated-unit offense-team defense-team defense-unit)
       (hit  updated-unit offense-team defense-team defense-unit))))
-
-
-    ;(println (unit/all-unit-coords-for :balls) (ball-deflect (:x defense-unit)
-    ;                                                         (:y defense-unit)))
-    ;(swap! state/game assoc-in [:units :balls] (conj (unit/all-unit-coords-for :balls)
-    ;                                                 (ball-deflect (:x defense-unit)
-    ;                                                               (:y defense-unit))))
-
 
 

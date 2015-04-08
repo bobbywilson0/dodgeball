@@ -3,6 +3,7 @@
             [dodgeball.state :as state]))
 
 (def move-range 6)
+(def attack-range 6)
 
 (defn active-team []
   (let [game @state/game]
