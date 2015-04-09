@@ -27,7 +27,7 @@
 (defn deflect [x y]
   (let [magnitude (+ 1 (rand-int 3))
         dir
-        (case (+ 1 (rand-int 4))
+        (case (+ 1 (rand-int 2))
           1 (map #(* magnitude %) [ 0 -1])
           2 (map #(* magnitude %) [-1  0])
           3 (map #(* magnitude %) [ 1  0])
@@ -37,12 +37,31 @@
       (zipmap [:x :y] (map + dir [x y])))))
 
 (defn slope [unit]
-  (map - (vals (:coords unit)) (vals (:coords (unit/selected-unit)))))
+  (reduce /
+          (reverse
+            (map
+              -
+              (vals (:coords unit))
+              (vals (:coords (unit/selected-unit)))))))
+
+
+(defn slope-min-max [m]
+  (cond (> m  6)  6
+        (< m -6) -6
+        :else m))
+
+(defn trajectory [unit magnitude]
+  (let [m  (slope-min-max (slope unit))
+        dx (/ magnitude (Math/sqrt (+ 1 (* m m))))
+        dy (* m dx)]
+    (println dx dy m unit)
+    {:x (+ (get-in (unit/selected-unit) [:coords :x]) (Math/ceil dx))
+     :y (+ (get-in (unit/selected-unit) [:coords :y]) (Math/ceil dy))}))
 
 (defn miss [updated-unit offense-team defense-team defense-unit]
-  (println (slope defense-unit))
-  (swap! state/game assoc-in [:units :balls] (conj (get-in @state/game [:units :balls]) (:ball (unit/selected-unit))))
-  (swap! state/game assoc-in [:units (:turn @state/game)] (conj offense-team updated-unit)))
+  (let [ball (assoc (:ball (unit/selected-unit)) :coords (trajectory defense-unit unit/attack-range))]
+    (swap! state/game assoc-in [:units :balls] (conj (get-in @state/game [:units :balls]) ball))
+    (swap! state/game assoc-in [:units (:turn @state/game)] (conj offense-team updated-unit))))
 
 (defn hit [updated-unit offense-team defense-team defense-unit]
   (let [coords (:coords defense-unit)
@@ -62,5 +81,3 @@
     (if (<= attack-points defense-points)
       (miss updated-unit offense-team defense-team defense-unit)
       (hit  updated-unit offense-team defense-team defense-unit))))
-
-
