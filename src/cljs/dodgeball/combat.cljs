@@ -45,13 +45,13 @@
               (vals (:coords (unit/selected-unit)))))))
 
 
-(defn slope-min-max [m]
+(defn clamp-slope [m]
   (cond (> m  6)  6
         (< m -6) -6
         :else m))
 
 (defn trajectory [unit magnitude]
-  (let [m  (slope-min-max (slope unit))
+  (let [m  (clamp-slope (slope unit))
         dx (/ magnitude (Math/sqrt (+ 1 (* m m))))
         dy (* m dx)]
     (println dx dy m unit)
