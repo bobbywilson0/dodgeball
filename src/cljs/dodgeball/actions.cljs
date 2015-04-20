@@ -18,20 +18,20 @@
              {:keys [x y]} event]
          (println event)
           (case (:type event)
-            :select-unit   (unit/select-unit (:id event))
-            :deselect-unit (unit/deselect-unit)
+            :select-unit   (unit/select-unit (:unit event))
+            :deselect-unit (unit/deselect-unit (state/selected-unit))
             :move-unit     (do
-                             (unit/move-unit x y)
+                             (unit/move-unit (:unit event) x y)
                              (swap! state/game update-in [:actions] inc)
-                             (unit/deselect-unit))
+                             (unit/deselect-unit (state/selected-unit)))
             :pickup-ball   (do
-                             (unit/pickup-ball x y)
+                             (unit/pickup-ball (:unit event))
                              (swap! state/game update-in [:actions] inc)
-                             (unit/deselect-unit))
+                             (unit/deselect-unit (state/selected-unit)))
             :attack        (do
-                             (combat/attack x y)
+                             (combat/attack (:unit event))
                              (swap! state/game update-in [:actions] inc)
-                             (unit/deselect-unit)))
+                             (unit/deselect-unit (state/selected-unit))))
          (if (= (:actions @state/game) 2) (switch-turns))
          (recur)))))
 
@@ -44,7 +44,7 @@
       (= nil (state/selected-unit))
       (boolean unit))
      {:type   :select-unit
-      :id     (:id unit)
+      :unit     unit
       :x      x
       :y      y}
 
@@ -52,7 +52,7 @@
        (boolean (state/selected-unit))
        (boolean (unit/find-one-unit-by x y (state/defense))))
      {:type :attack
-      :id   (:id unit)
+      :unit   unit
       :x    x
       :y    y}
      (or
@@ -62,7 +62,7 @@
          (= nil (state/selected-unit))
          (boolean (unit/find-one-unit-by x y (state/defense)))))
      {:type :deselect-unit
-      :id   (:id unit)
+      :unit unit
       :x    x
       :y    y}
 
@@ -70,14 +70,14 @@
        (boolean (unit/find-one-unit-by x y :ball))
        (boolean (state/selected-unit)))
      {:type :pickup-ball
-      :id   (:id (unit/find-one-unit-by x y :ball))
+      :unit   (unit/find-one-unit-by x y :ball)
       :x    x
       :y    y}
 
 
      (unit/in-movement-range? x y (state/selected-unit))
      {:type :move-unit
-      :id   (:id (state/selected-unit))
+      :unit (state/selected-unit)
       :x    x
       :y    y}
 

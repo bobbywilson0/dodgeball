@@ -1,3 +1,4 @@
+- HUD for actions
 - Don't allow unit stacking
   - position ball randomly around colliding unit
   - don't allow units to be dropped on other units

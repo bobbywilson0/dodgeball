@@ -71,13 +71,12 @@
     (println "filtered units: " filtered-units " ball: " ball " updated unit: " updated-unit)
     (swap! state/game assoc :units (conj filtered-units ball updated-unit))))
 
-(defn attack [x y]
+(defn attack [unit]
   (let [updated-unit   (conj (state/selected-unit) {:ball nil})
         attack-points  (roll 8)
         defense-points (roll 8)
-        defense-unit   (unit/find-one-unit-by x y (state/defense))
-        filtered-units   (filter (apply every-pred [#(not= % defense-unit) #(not= % (state/selected-unit))]) (:units @state/game))]
+        filtered-units   (filter (apply every-pred [#(not= % unit) #(not= % (state/selected-unit))]) (:units @state/game))]
     (println "attack dice: " attack-points "defense dice: " defense-points)
     (if (<= attack-points defense-points)
-      (miss filtered-units updated-unit defense-unit)
-      (hit filtered-units updated-unit defense-unit))))
+      (miss filtered-units updated-unit unit)
+      (hit filtered-units updated-unit unit))))

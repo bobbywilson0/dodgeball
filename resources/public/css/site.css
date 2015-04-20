@@ -51,7 +51,7 @@ table {
 }
 
 table.bench {
-  margin-top: 30px;
+  margin-top: 100px;
 }
 
 .container {
@@ -87,25 +87,25 @@ tr.middle-top {
 }
 
 .red-team {
-  background: red url('../images/gu1.png') no-repeat center;
+  background: red url('../images/gu1.gif') no-repeat center;
   width: 64px;
   height: 64px;
 }
 
 .red-team-ball {
-  background: pink url('../images/gu1.png') no-repeat center;
+  background: pink url('../images/gu1.gif') no-repeat center;
   width: 64px;
   height: 64px;
 }
 
 .blue-team {
-  background: blue url('../images/gu1.png') no-repeat center;
+  background: blue url('../images/gu1.gif') no-repeat center;
   width: 64px;
   height: 64px;
 }
 
 .blue-team-ball {
-  background: lightblue url('../images/gu1.png') no-repeat center;
+  background: lightblue url('../images/gu1.gif') no-repeat center;
   width: 64px;
   height: 64px;
 }

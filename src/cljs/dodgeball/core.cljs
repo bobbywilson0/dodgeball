@@ -11,7 +11,7 @@
 
 (defn bench []
   [:table {:class "bench"}
-   (for [_ (range 0 4)]
+   (for [_ (range 0 2)]
      [:tr [:td]])])
 
 (defn game-board [{:keys [:actions]}]
@@ -27,7 +27,6 @@
                              :class    (unit/css-class x y)
                              :on-click #(put! actions (actions/determine-action x y))}]))]))]
    [bench]])
-
 
 (defn draw-board []
   (let [ch (chan)]
