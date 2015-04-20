@@ -1,139 +1,146 @@
 (ns dodgeball.unit
-  (:require [reagent.core :as reagent :refer [atom]]
+  (:require [reagent.core :refer [atom]]
             [dodgeball.state :as state]))
 
-(def move-range 6)
-(def attack-range 6)
-
-(defn active-team []
-  (let [game @state/game]
-  ((:turn game) (:units game))))
+(def move-range 4)
+(def attack-range 4)
 
 (defn defense []
-  (if (= (:turn @state/game) :red-team)
-    :blue-team
-    :red-team))
+  (if (= (:turn @state/game) :red)
+    :blue
+    :red))
+
+(defn offense []
+  (if (= (:turn @state/game) :red)
+    :red
+    :blue))
 
 (defn distance [a b]
   (Math/abs (- b a)))
 
-(defn all-unit-coords-for [unit-type]
-  (get-in @state/game [:units unit-type]))
+(defn find-all-units-by [unit-type]
+  (filter #(= unit-type (:type %)) (:units @state/game)))
 
-(defn unit-by-type [x y unit-type]
+(defn find-one-unit-by [x y unit-type]
   (first
-   (filter #(= {:x x :y y} (:coords %)) (all-unit-coords-for unit-type))))
+    (filter
+      (fn [unit]
+        (and
+          (= x (:x unit))
+          (= y (:y unit))
+          (= unit-type (:type unit))))
+      (:units @state/game))))
 
 (defn selected-unit []
   (first
-   (filter :selected (active-team))))
+    (filter :selected (:units @state/game))))
 
-(defn active-team-unit-by-id [id]
+(defn find-unit-by-id [id]
   (first
-   (filter #(= id (:id %))
-           (active-team))))
+    (filter
+      #(= id (:id %))
+      (:units @state/game))))
 
 (defn select-unit [id]
-  (let [updated-unit
-        (conj
-         (active-team-unit-by-id id)
-         {:selected true})
-        team
-        (filter #(not= id (:id %)) (active-team))]
-    (swap! state/game assoc-in [:units (:turn @state/game)] (conj team updated-unit))))
+  (let [updated-unit   (conj
+                         (find-unit-by-id id)
+                         {:selected true})
+        filtered-units (filter #(not= id (:id %)) (:units @state/game))]
+    (swap! state/game assoc :units (conj filtered-units updated-unit))))
 
 (defn deselect-unit []
   (let [selected-unit (selected-unit)
-        updated-unit
-        (conj
-         selected-unit
-         {:selected false})
-        team
-        (filter #(not= selected-unit %) (active-team))]
-    (swap! state/game assoc-in [:units (:turn @state/game)] (conj team updated-unit))))
+        updated-unit  (conj
+                        selected-unit
+                        {:selected false})
+        filtered-units (filter #(not= selected-unit %) (:units @state/game))]
+    (swap! state/game assoc :units (conj filtered-units updated-unit))))
 
 (defn move-unit [x y]
   (let [selected-unit (selected-unit)
-      updated-unit
-      (conj
-       selected-unit
-       {:coords {:x x :y y}})
-      team
-      (filter #(not= selected-unit %) (active-team))]
-    (swap! state/game assoc-in [:units (:turn @state/game)] (conj team updated-unit))))
+        updated-unit  (conj
+                        selected-unit
+                        {:x x :y y})
+        filtered-units (filter #(not= selected-unit %) (:units @state/game))]
+    (swap! state/game assoc :units (conj filtered-units updated-unit))))
 
-(defn ball-in-front-of-unit? [ball unit]
-  (let [ball-x (:x (:coords ball))
-        ball-y (:y (:coords ball))
-        unit-y (:y (:coords unit))
-        unit-x (:x (:coords unit))]
+(defn unit-adjacent-to-ball? [ball unit]
+  (let [ball-x (:x ball)
+        ball-y (:y ball)
+        unit-y (:y unit)
+        unit-x (:x unit)]
     (and
-     (= ball-x unit-x)
-     (or
-      (and
-       (= (:turn @state/game) :blue-team)
-       (= unit-y (dec ball-y)))
-      (and
-       (= (:turn @state/game) :red-team)
-       (= unit-y (inc ball-y)))))))
+      (or
+        (= unit-x (dec ball-x))
+        (= unit-x (inc ball-x))
+        (= unit-y (dec ball-y))
+        (= unit-y (inc ball-y))))))
 
 (defn balls-without [x y]
-  (filter #(not= (:coords %) {:x x :y y}) (get-in @state/game [:units :balls])))
+  (filter (fn [unit]
+            (and
+              (not= x (:x unit))
+              (not= y (:y unit))
+              (not= :ball (:type unit))))
+          (:units @state/game)))
 
 (defn pickup-ball [x y]
   (let [selected-unit (selected-unit)
-        ball          (unit-by-type x y :balls)
+        ball          (find-one-unit-by x y :ball)
         updated-unit  (conj selected-unit {:ball ball})
-        team          (filter #(not= selected-unit %) (active-team))]
-    (if (ball-in-front-of-unit? ball selected-unit)
-      (do
-        (swap! state/game assoc-in [:units :balls] (balls-without x y))
-        (swap! state/game assoc-in [:units (:turn @state/game)] (conj team updated-unit))))))
+        filtered-units (filter
+                         (apply every-pred [#(not= ball %) #(not= selected-unit %)])
+                         (:units @state/game))]
+    (if (unit-adjacent-to-ball? ball selected-unit)
+      (swap! state/game assoc :units (conj filtered-units updated-unit)))))
 
 (defn selected? [x y]
-  (= {:x x :y y} (:coords (selected-unit))))
+  (let [unit (selected-unit)]
+    (and
+      (= x (:x unit))
+      (= y (:y unit)))))
 
+(defn css-class [x y]
+  (let [blue-unit (find-one-unit-by x y :blue)
+        red-unit  (find-one-unit-by x y :red)
+        ball-unit (find-one-unit-by x y :ball)]
+    (str
+      (cond
+        (and
+          (boolean blue-unit)
+          (:ball blue-unit))
+        "blue-team-ball"
 
-(defn unit-class [x y]
-  (let [blue-unit (unit-by-type x y :blue-team)
-        red-unit  (unit-by-type x y :red-team)
-        ball-unit (unit-by-type x y :balls)]
-  (str
-    (cond
-     (and
-      (boolean blue-unit)
-      (:ball blue-unit))
-     "blue-team-ball"
+        (boolean blue-unit)
+        "blue-team"
 
-     (boolean blue-unit)
-     "blue-team"
+        (and
+          (boolean red-unit)
+          (:ball red-unit))
+        "red-team-ball"
 
-     (and
-      (boolean red-unit)
-      (:ball red-unit))
-     "red-team-ball"
+        (boolean red-unit)
+        "red-team"
 
-     (boolean red-unit)
-     "red-team"
+        (boolean ball-unit)
+        "ball")
 
-     (boolean ball-unit)
-     "ball")
+      (cond
+        (selected? x y)
+        (str " " "selected")))))
 
-   (cond
-    (selected? x y)
-    (str " " "selected")))))
-
-(defn in-range? [x y id]
-  (and
-   (or
-     (and
-      (= :blue-team (:turn @state/game))
-      (<= y 7))
-     (and
-      (= :red-team (:turn @state/game))
-      (>= y 4)))
-   (<=
-    (reduce
-     +
-     (map distance [x y] (vals (:coords (active-team-unit-by-id id)))))
-    move-range)))
+(defn in-movement-range? [x2 y2 selected-unit]
+  (let [{:keys [:x :y]} selected-unit]
+    (and
+      (or
+        (and
+          (= :blue (:turn @state/game))
+          (<= x2 4))
+        (and
+          (= :red (:turn @state/game))
+          (>= x2 4)))
+      (<=
+        (reduce
+          +
+          (map distance [x2 y2] [x y]))
+        move-range))))

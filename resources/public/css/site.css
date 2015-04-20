@@ -46,12 +46,28 @@ table {
   border-collapse: collapse;
   border-spacing: 0;
   border: 4px solid #000;
-  margin: 20px auto;
+  float: left;
+  margin: 0 10px;
+}
+
+table.bench {
+  margin-top: 30px;
 }
 
 .container {
   width: 900px;
   margin: 0 auto;
+}
+
+.game {
+  margin: 40px auto;
+  width: 800px;
+}
+
+.clear:after {
+    clear: both;
+    content: "";
+    display: table;
 }
 
 td {

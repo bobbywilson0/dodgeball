@@ -1,4 +1,3 @@
-- Reset balls to middle if thrown out of bounds
 - Don't allow unit stacking
   - position ball randomly around colliding unit
   - don't allow units to be dropped on other units
@@ -11,3 +10,4 @@
   - players
   - balls
 - Allow two clients to be connected to the same game
+- Make balls dead until activated by being brought to back wall

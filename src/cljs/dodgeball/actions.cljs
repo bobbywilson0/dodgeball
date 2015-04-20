@@ -1,17 +1,18 @@
 (ns dodgeball.actions
-  (:require [reagent.core :as reagent :refer [atom]]
+  (:require [reagent.core :refer [atom]]
+            [cljs.core.async :refer [<!]]
             [dodgeball.unit :as unit]
             [dodgeball.state :as state]
             [dodgeball.combat :as combat])
   (:require-macros [cljs.core.async.macros :refer [go]]))
 
 (defn switch-turns []
-  (if (= (:turn @state/game) :red-team)
+  (if (= (:turn @state/game) :red)
     (do
-      (swap! state/game assoc :turn :blue-team)
+      (swap! state/game assoc :turn :blue)
       (swap! state/game assoc :actions 0))
     (do
-      (swap! state/game assoc :turn :red-team)
+      (swap! state/game assoc :turn :red)
       (swap! state/game assoc :actions 0))))
 
 (defn handle-event [ch]
@@ -42,43 +43,44 @@
          (recur)))))
 
 (defn determine-action [x y]
-  (let [team-unit (unit/unit-by-type x y (:turn @state/game))]
+  (let [unit (unit/find-one-unit-by x y (:turn @state/game))]
+    (println (unit/in-movement-range? x y (unit/selected-unit)))
+
     (cond
      (and
       (= nil (unit/selected-unit))
-      (boolean team-unit))
+      (boolean unit))
      {:type   :select-unit
-      :id     (:id team-unit)
+      :id     (:id unit)
       :coords {:x x :y y}}
 
      (and
        (boolean (unit/selected-unit))
-       (boolean (unit/unit-by-type x y (unit/defense))))
+       (boolean (unit/find-one-unit-by x y (unit/defense))))
      {:type :attack
-      :id (:id team-unit)
+      :id (:id unit)
       :coords {:x x :y y}}
-
      (or
-       (boolean team-unit)
-       (not (unit/in-range? x y (:id (unit/selected-unit))))
+       (boolean unit)
+       (not (unit/in-movement-range? x y (unit/selected-unit)))
        (and
          (= nil (unit/selected-unit))
-         (boolean (unit/unit-by-type x y (unit/defense)))))
+         (boolean (unit/find-one-unit-by x y (unit/defense)))))
      {:type   :deselect-unit
-      :id     (:id team-unit)
+      :id     (:id unit)
       :coords {:x x :y y}}
 
      (and
-       (boolean (unit/unit-by-type x y :balls))
+       (boolean (unit/find-one-unit-by x y :ball))
        (boolean (unit/selected-unit)))
      {:type   :pickup-ball
-      :id     (:id (unit/unit-by-type x y :balls))
+      :id     (:id (unit/find-one-unit-by x y :ball))
       :coords {:x x :y y}}
 
 
-     (unit/in-range? x y (:id team-unit))
+     (unit/in-movement-range? x y (unit/selected-unit))
      {:type :move-unit
-      :id (:id team-unit)
+      :id (:id (unit/selected-unit))
       :coords {:x x :y y}}
 
      :else
