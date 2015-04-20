@@ -30,11 +30,11 @@
           3 (map #(* magnitude %) [ 1  0])
           4 (map #(* magnitude %) [ 0  1]))]
     (if (out-of-bounds x y)
-      (reset-ball (:id (unit/selected-unit)))
+      (reset-ball (:id (state/selected-unit)))
       (zipmap [:x :y] (map + dir [x y])))))
 
 (defn slope [unit]
-  (let [{x1 :x y1 :y} (unit/selected-unit)
+  (let [{x1 :x y1 :y} (state/selected-unit)
         {x2 :x y2 :y} unit]
     (/ (- x2 x1) (- y2 y1))))
 
@@ -48,8 +48,8 @@
         dy (/ magnitude (Math/sqrt (+ 1 (* m m))))
         dx (* m dy)]
     (println "M: " m " DX: " dx " DY: " dy)
-    {:x (+ (:x (unit/selected-unit)) (Math/floor dx))
-     :y (+ (:y (unit/selected-unit)) (Math/floor dy))}))
+    {:x (+ (:x (state/selected-unit)) (Math/floor dx))
+     :y (+ (:y (state/selected-unit)) (Math/floor dy))}))
 
 (defn position-ball [{:keys [x y] :as coords} id]
   (if (out-of-bounds x y)
@@ -59,24 +59,24 @@
 (defn miss [filtered-units updated-unit defense-unit]
   (println "DODGE!")
 
-  (let [ball (conj (:ball (unit/selected-unit))
-                   (position-ball (trajectory defense-unit unit/attack-range) (:id (:ball (unit/selected-unit)))))]
+  (let [ball (conj (:ball (state/selected-unit))
+                   (position-ball (trajectory defense-unit unit/attack-range) (:id (:ball (state/selected-unit)))))]
     (println "filtered units: " filtered-units " ball: " ball " updated unit: " updated-unit)
     (swap! state/game assoc :units (conj filtered-units ball updated-unit defense-unit))))
 
 (defn hit [filtered-units updated-unit defense-unit]
   (println "HIT!")
 
-  (let [ball (conj (:ball (unit/selected-unit)) (deflect (:x defense-unit) (:y defense-unit)))]
+  (let [ball (conj (:ball (state/selected-unit)) (deflect (:x defense-unit) (:y defense-unit)))]
     (println "filtered units: " filtered-units " ball: " ball " updated unit: " updated-unit)
     (swap! state/game assoc :units (conj filtered-units ball updated-unit))))
 
 (defn attack [x y]
-  (let [updated-unit   (conj (unit/selected-unit) {:ball nil})
+  (let [updated-unit   (conj (state/selected-unit) {:ball nil})
         attack-points  (roll 8)
         defense-points (roll 8)
-        defense-unit   (unit/find-one-unit-by x y (unit/defense))
-        filtered-units   (filter (apply every-pred [#(not= % defense-unit) #(not= % (unit/selected-unit))]) (:units @state/game))]
+        defense-unit   (unit/find-one-unit-by x y (state/defense))
+        filtered-units   (filter (apply every-pred [#(not= % defense-unit) #(not= % (state/selected-unit))]) (:units @state/game))]
     (println "attack dice: " attack-points "defense dice: " defense-points)
     (if (<= attack-points defense-points)
       (miss filtered-units updated-unit defense-unit)

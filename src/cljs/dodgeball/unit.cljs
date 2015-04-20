@@ -5,21 +5,8 @@
 (def move-range 4)
 (def attack-range 4)
 
-(defn defense []
-  (if (= (:turn @state/game) :red)
-    :blue
-    :red))
-
-(defn offense []
-  (if (= (:turn @state/game) :red)
-    :red
-    :blue))
-
 (defn distance [a b]
   (Math/abs (- b a)))
-
-(defn find-all-units-by [unit-type]
-  (filter #(= unit-type (:type %)) (:units @state/game)))
 
 (defn find-one-unit-by [x y unit-type]
   (first
@@ -30,10 +17,6 @@
           (= y (:y unit))
           (= unit-type (:type unit))))
       (:units @state/game))))
-
-(defn selected-unit []
-  (first
-    (filter :selected (:units @state/game))))
 
 (defn find-unit-by-id [id]
   (first
@@ -49,7 +32,7 @@
     (swap! state/game assoc :units (conj filtered-units updated-unit))))
 
 (defn deselect-unit []
-  (let [selected-unit (selected-unit)
+  (let [selected-unit (state/selected-unit)
         updated-unit  (conj
                         selected-unit
                         {:selected false})
@@ -57,7 +40,7 @@
     (swap! state/game assoc :units (conj filtered-units updated-unit))))
 
 (defn move-unit [x y]
-  (let [selected-unit (selected-unit)
+  (let [selected-unit (state/selected-unit)
         updated-unit  (conj
                         selected-unit
                         {:x x :y y})
@@ -76,16 +59,8 @@
         (= unit-y (dec ball-y))
         (= unit-y (inc ball-y))))))
 
-(defn balls-without [x y]
-  (filter (fn [unit]
-            (and
-              (not= x (:x unit))
-              (not= y (:y unit))
-              (not= :ball (:type unit))))
-          (:units @state/game)))
-
 (defn pickup-ball [x y]
-  (let [selected-unit (selected-unit)
+  (let [selected-unit (state/selected-unit)
         ball          (find-one-unit-by x y :ball)
         updated-unit  (conj selected-unit {:ball ball})
         filtered-units (filter
@@ -95,7 +70,7 @@
       (swap! state/game assoc :units (conj filtered-units updated-unit)))))
 
 (defn selected? [x y]
-  (let [unit (selected-unit)]
+  (let [unit (state/selected-unit)]
     (and
       (= x (:x unit))
       (= y (:y unit)))))

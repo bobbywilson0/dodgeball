@@ -5,19 +5,13 @@
             [dodgeball.state :as state]
             [dodgeball.actions :as actions]))
 
-(def board-length (range 0 11))
-
 (def board-width (range 0 9))
 (def board-height (range 0 5))
 
 
-(defn border [y]
-  (cond
-    (or (= y 4) (= y 7)) "middle-top"))
-
 (defn bench []
   [:table {:class "bench"}
-   (for [n (range 0 4)]
+   (for [_ (range 0 4)]
      [:tr [:td]])])
 
 (defn game-board [{:keys [:actions]}]

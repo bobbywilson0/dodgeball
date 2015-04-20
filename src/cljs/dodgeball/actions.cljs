@@ -44,43 +44,43 @@
 
 (defn determine-action [x y]
   (let [unit (unit/find-one-unit-by x y (:turn @state/game))]
-    (println (unit/in-movement-range? x y (unit/selected-unit)))
+    (println (unit/in-movement-range? x y (state/selected-unit)))
 
     (cond
      (and
-      (= nil (unit/selected-unit))
+      (= nil (state/selected-unit))
       (boolean unit))
      {:type   :select-unit
       :id     (:id unit)
       :coords {:x x :y y}}
 
      (and
-       (boolean (unit/selected-unit))
-       (boolean (unit/find-one-unit-by x y (unit/defense))))
+       (boolean (state/selected-unit))
+       (boolean (unit/find-one-unit-by x y (state/defense))))
      {:type :attack
       :id (:id unit)
       :coords {:x x :y y}}
      (or
        (boolean unit)
-       (not (unit/in-movement-range? x y (unit/selected-unit)))
+       (not (unit/in-movement-range? x y (state/selected-unit)))
        (and
-         (= nil (unit/selected-unit))
-         (boolean (unit/find-one-unit-by x y (unit/defense)))))
+         (= nil (state/selected-unit))
+         (boolean (unit/find-one-unit-by x y (state/defense)))))
      {:type   :deselect-unit
       :id     (:id unit)
       :coords {:x x :y y}}
 
      (and
        (boolean (unit/find-one-unit-by x y :ball))
-       (boolean (unit/selected-unit)))
+       (boolean (state/selected-unit)))
      {:type   :pickup-ball
       :id     (:id (unit/find-one-unit-by x y :ball))
       :coords {:x x :y y}}
 
 
-     (unit/in-movement-range? x y (unit/selected-unit))
+     (unit/in-movement-range? x y (state/selected-unit))
      {:type :move-unit
-      :id (:id (unit/selected-unit))
+      :id (:id (state/selected-unit))
       :coords {:x x :y y}}
 
      :else

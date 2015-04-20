@@ -24,3 +24,12 @@
      :red []}
     :turn :red
     :actions 0}))
+
+(defn defense []
+  (if (= (:turn @game) :red)
+    :blue
+    :red))
+
+(defn selected-unit []
+  (first
+    (filter :selected (:units @game))))
