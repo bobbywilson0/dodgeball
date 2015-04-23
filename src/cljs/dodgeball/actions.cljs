@@ -11,68 +11,84 @@
     (swap! state/game assoc :turn :blue :actions 0)
     (swap! state/game assoc :turn :red :actions 0)))
 
+(defn update-unit [unit & to-conj]
+  (let [updated-unit   (apply conj unit to-conj)
+        filtered-units (filter #(not= unit %) (:units @state/game))]
+    (swap! state/game assoc :units (conj filtered-units updated-unit))))
+
+(defn select-unit [{:keys [x y]}]
+  (update-unit (unit/find-one-unit-by x y (:turn @state/game)) {:selected true}))
+
+(defn deselect-unit [unit]
+  (update-unit unit {:selected false}))
+
+(defn increment-actions []
+  (swap! state/game update :actions inc))
+
 (defn handle-event [ch]
   (go
     (loop []
       (let [event (<! ch)
             {:keys [selected target]} event]
-        (println "SELECTED" selected)
+        (println event)
+
         (case (:type event)
-          :select-unit (unit/select-unit target)
-          :deselect-unit (unit/deselect-unit selected)
+          :select-unit (select-unit target)
+          :deselect-unit (deselect-unit selected)
           :move-unit (do
-                       (unit/move-unit selected target)
-                       (swap! state/game update-in [:actions] inc)
-                       (unit/deselect-unit (state/selected-unit)))
+                       (update-unit selected target {:selected false})
+                       (increment-actions))
           :pickup-ball (do
                          (unit/pickup-ball selected target)
-                         (swap! state/game update-in [:actions] inc)
-                         (unit/deselect-unit (state/selected-unit)))
+                         (increment-actions))
           :attack (do
                     (combat/attack selected target)
-                    (swap! state/game update-in [:actions] inc)
-                    (unit/deselect-unit selected)))
+                    (increment-actions)
+                    (deselect-unit (state/selected-unit))))
         (if (= (:actions @state/game) 2) (switch-turns))
         (recur)))))
 
 (defn determine-action [x y]
-  (let [selected (state/selected-unit)
+  (let [selected     (state/selected-unit)
         defense-unit (unit/find-one-unit-by x y (state/defense))]
 
     (cond
       (and
         (= nil selected)
         (boolean (unit/find-one-unit-by x y (:turn @state/game))))
-      {:type :select-unit
-       :target {:x x :y y}
+      {:type     :select-unit
+       :target   {:x x :y y}
        :selected selected}
 
       (and
         (boolean selected)
         (boolean defense-unit))
-      {:type :attack
-       :target defense-unit
+      {:type     :attack
+       :target   defense-unit
        :selected selected}
 
       (or
         (not (unit/in-movement-range? x y selected))
         (and
+          (= x (:x selected))
+          (= y (:y selected)))
+        (and
           (= nil selected)
           (boolean defense-unit)))
-      {:type :deselect-unit
-       :target {:x x :y y}
+      {:type     :deselect-unit
+       :target   {:x x :y y}
        :selected selected}
 
       (and
         (boolean (unit/find-one-unit-by x y :ball))
         (boolean selected))
-      {:type :pickup-ball
-       :target (unit/find-one-unit-by x y :ball)
+      {:type     :pickup-ball
+       :target   (unit/find-one-unit-by x y :ball)
        :selected selected}
 
       (unit/in-movement-range? x y selected)
-      {:type :move-unit
-       :target {:x x :y y}
+      {:type     :move-unit
+       :target   {:x x :y y}
        :selected selected}
 
       :else

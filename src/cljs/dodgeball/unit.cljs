@@ -18,38 +18,23 @@
           (= unit-type (:type unit))))
       (:units @state/game))))
 
-(defn update-unit [unit to-conj]
-  (let [updated-unit   (conj unit to-conj)
-        filtered-units (filter #(not= unit %) (:units @state/game))]
-    (swap! state/game assoc :units (conj filtered-units updated-unit))))
-
-(defn select-unit [target]
-  (update-unit (find-one-unit-by (:x target) (:y target) (:turn @state/game)) {:selected true}))
-
-(defn deselect-unit [unit]
-  (update-unit unit {:selected false}))
-
-(defn move-unit [selected {:keys [x y] :as target}]
-  (println selected)
-  (update-unit selected target))
-
-(defn unit-adjacent-to-ball? [ball unit]
+(defn unit-adjacent-to-ball? [{ball-x :x ball-y :y}  {unit-x :x unit-y :y}]
   (or
     (and
-      (= (:x unit) (dec (:x ball)))
-      (= (:y unit) (:y ball)))
+      (= unit-x (dec ball-x))
+      (= unit-y ball-y))
     (and
-      (= (:x unit) (inc (:x ball)))
-      (= (:y unit) (:y ball)))
+      (= unit-x (inc ball-x))
+      (= unit-y ball-y))
     (and
-      (= (:y unit) (dec (:y ball)))
-      (= (:x unit) (:x ball)))
+      (= unit-y (dec ball-y))
+      (= unit-x ball-x))
     (and
-      (= (:y unit) (inc (:y ball)))
-      (= (:x unit) (:x ball)))))
+      (= unit-y (inc ball-y))
+      (= unit-x ball-x))))
 
 (defn pickup-ball [selected-unit unit]
-  (let [updated-unit   (conj selected-unit {:ball unit})
+  (let [updated-unit   (conj selected-unit {:ball unit :selected false})
         filtered-units (filter
                          (apply every-pred [#(not= unit %) #(not= selected-unit %)])
                          (:units @state/game))]
