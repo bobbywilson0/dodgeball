@@ -24,7 +24,7 @@
 (defn deflect [x y]
   (let [magnitude (roll 2)
         dir
-        (case (roll 2)
+        (case (roll 4)
           1 (map #(* magnitude %) [ 0 -1])
           2 (map #(* magnitude %) [-1  0])
           3 (map #(* magnitude %) [ 1  0])
@@ -36,7 +36,7 @@
 (defn slope [unit]
   (let [{x1 :x y1 :y} (state/selected-unit)
         {x2 :x y2 :y} unit]
-    (/ (- x2 x1) (- y2 y1))))
+    (/(- y2 y1) (- x2 x1))))
 
 (defn clamp-slope [m]
   (cond (> m  4)  4
@@ -71,12 +71,12 @@
     (println "filtered units: " filtered-units " ball: " ball " updated unit: " updated-unit)
     (swap! state/game assoc :units (conj filtered-units ball updated-unit))))
 
-(defn attack [unit]
-  (let [updated-unit   (conj (state/selected-unit) {:ball nil})
+(defn attack [selected target]
+  (let [updated-unit   (conj selected {:ball nil})
         attack-points  (roll 8)
         defense-points (roll 8)
-        filtered-units   (filter (apply every-pred [#(not= % unit) #(not= % (state/selected-unit))]) (:units @state/game))]
+        filtered-units   (filter (apply every-pred [#(not= % target) #(not= % selected)]) (:units @state/game))]
     (println "attack dice: " attack-points "defense dice: " defense-points)
     (if (<= attack-points defense-points)
-      (miss filtered-units updated-unit unit)
-      (hit filtered-units updated-unit unit))))
+      (miss filtered-units updated-unit target)
+      (hit filtered-units updated-unit target))))
