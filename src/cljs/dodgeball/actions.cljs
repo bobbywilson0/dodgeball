@@ -33,18 +33,18 @@
         (println event)
 
         (case (:type event)
-          :select-unit (select-unit target)
+          :select-unit   (select-unit target)
           :deselect-unit (deselect-unit selected)
-          :move-unit (do
-                       (update-unit selected target {:selected false})
-                       (increment-actions))
-          :pickup-ball (do
-                         (unit/pickup-ball selected target)
-                         (increment-actions))
-          :attack (do
-                    (combat/attack selected target)
-                    (increment-actions)
-                    (deselect-unit (state/selected-unit))))
+          :move-unit     (do
+                           (update-unit selected target {:selected false})
+                           (increment-actions))
+          :pickup-ball   (do
+                           (unit/pickup-ball selected target)
+                           (increment-actions))
+          :attack        (do
+                           (combat/attack selected target)
+                           (increment-actions)
+                           (deselect-unit (state/selected-unit))))
         (if (= (:actions @state/game) 2) (switch-turns))
         (recur)))))
 

@@ -2,6 +2,8 @@
   (:require [reagent.core :refer [atom]]
             [dodgeball.state :as state]))
 
+(enable-console-print!)
+
 (def move-range 4)
 (def attack-range 4)
 
