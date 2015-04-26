@@ -10,7 +10,7 @@
 (defn distance [a b]
   (Math/abs (- b a)))
 
-(defn find-one-unit-by [x y unit-type]
+(defn find-one-unit-by [x y unit-type col]
   (first
     (filter
       (fn [unit]
@@ -18,7 +18,7 @@
           (= x (:x unit))
           (= y (:y unit))
           (= unit-type (:type unit))))
-      (:units @state/game))))
+      (:units col))))
 
 (defn unit-adjacent-to-ball? [{ball-x :x ball-y :y}  {unit-x :x unit-y :y}]
   (or
@@ -50,9 +50,9 @@
       (= y (:y unit)))))
 
 (defn css-class [x y]
-  (let [blue-unit (find-one-unit-by x y :blue)
-        red-unit  (find-one-unit-by x y :red)
-        ball-unit (find-one-unit-by x y :ball)]
+  (let [blue-unit (find-one-unit-by x y :blue @state/game)
+        red-unit  (find-one-unit-by x y :red @state/game)
+        ball-unit (find-one-unit-by x y :ball @state/game)]
     (str
       (cond
         (and

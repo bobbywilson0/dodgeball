@@ -17,7 +17,7 @@
     (swap! state/game assoc :units (conj filtered-units updated-unit))))
 
 (defn select-unit [{:keys [x y]}]
-  (update-unit (unit/find-one-unit-by x y (:turn @state/game)) {:selected true}))
+  (update-unit (unit/find-one-unit-by x y (:turn @state/game) @state/game) {:selected true}))
 
 (defn deselect-unit [unit]
   (update-unit unit {:selected false}))
@@ -50,12 +50,13 @@
 
 (defn determine-action [x y]
   (let [selected     (state/selected-unit)
-        defense-unit (unit/find-one-unit-by x y (state/defense))]
+        game-state   @state/game
+        defense-unit (unit/find-one-unit-by x y (state/defense) game-state)]
 
     (cond
       (and
         (= nil selected)
-        (boolean (unit/find-one-unit-by x y (:turn @state/game))))
+        (boolean (unit/find-one-unit-by x y (:turn game-state) game-state)))
       {:type     :select-unit
        :target   {:x x :y y}
        :selected selected}
@@ -80,10 +81,10 @@
        :selected selected}
 
       (and
-        (boolean (unit/find-one-unit-by x y :ball))
+        (boolean (unit/find-one-unit-by x y :ball game-state))
         (boolean selected))
       {:type     :pickup-ball
-       :target   (unit/find-one-unit-by x y :ball)
+       :target   (unit/find-one-unit-by x y :ball game-state)
        :selected selected}
 
       (unit/in-movement-range? x y selected)
@@ -92,4 +93,4 @@
        :selected selected}
 
       :else
-      (println x y (:turn @state/game)))))
+      (println x y (:turn game-state)))))
