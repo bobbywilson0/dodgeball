@@ -33,23 +33,21 @@
       (reset-ball (:id (state/selected-unit)))
       (zipmap [:x :y] (map + dir [x y])))))
 
-(defn slope [unit]
-  (let [{x1 :x y1 :y} (state/selected-unit)
-        {x2 :x y2 :y} unit]
-    (/(- y2 y1) (- x2 x1))))
+(defn slope [{x1 :x y1 :y} {x2 :x y2 :y}]
+    (/(- y2 y1) (- x2 x1)))
 
 (defn clamp-slope [m]
   (cond (> m  4)  4
         (< m -4) -4
         :else m))
 
-(defn trajectory [unit magnitude]
-  (let [m  (clamp-slope (slope unit))
+(defn trajectory [{:keys [x y] :as selected-unit} target-unit magnitude]
+  (let [m  (clamp-slope (slope selected-unit target-unit))
         dx (/ magnitude (Math/sqrt (+ 1 (* m m))))
         dy (* m dx)]
     (println "M: " m " DX: " dx " DY: " dy)
-    {:x (+ (:x (state/selected-unit)) (Math/round dx))
-     :y (+ (:y (state/selected-unit)) (Math/round dy))}))
+    {:x (+ x (Math/round dx))
+     :y (+ y (Math/round dy))}))
 
 (defn position-ball [{:keys [x y] :as coords} id]
   (if (out-of-bounds x y)
@@ -60,7 +58,7 @@
   (println "DODGE!")
 
   (let [ball (conj (:ball (state/selected-unit))
-                   (position-ball (trajectory defense-unit unit/attack-range) (:id (:ball (state/selected-unit)))))]
+                   (position-ball (trajectory (state/selected-unit) defense-unit unit/attack-range) (:id (:ball (state/selected-unit)))))]
     (println "filtered units: " filtered-units " ball: " ball " updated unit: " updated-unit)
     (swap! state/game assoc :units (conj filtered-units ball updated-unit defense-unit))))
 
