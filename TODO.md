@@ -2,13 +2,8 @@
 - Don't allow unit stacking
   - position ball randomly around colliding unit
   - don't allow units to be dropped on other units
-- Set up bench
-  - hit players move to their respective bench
-  - caught balls release bench player FIFO
+- caught balls release bench player FIFO
 - Custom player units
   - add different attributes to units
-- Add basic artwork
-  - players
-  - balls
 - Allow two clients to be connected to the same game
 - Make balls dead until activated by being brought to back wall

@@ -11,14 +11,14 @@
 
 (defn red-bench [red-bench]
   [:table {:class "bench"}
-   (for [y (range 0 2)]
+   (for [y (range 0 3)]
      (if (<= (+ 1 y) (count red-bench))
        [:tr [:td {:class "red-team"}]]
        [:tr [:td]]))])
 
 (defn blue-bench [blue-bench]
   [:table {:class "bench"}
-   (for [y (range 0 2)]
+   (for [y (range 0 3)]
      (if (<= (+ 1 y) (count blue-bench))
        [:tr [:td {:class "blue-team"}]]
        [:tr [:td]]))])
