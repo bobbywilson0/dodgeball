@@ -41,13 +41,16 @@
         (< m -4) -4
         :else m))
 
-(defn trajectory [{:keys [x y] :as selected-unit} target-unit magnitude]
+(defn trajectory [{:keys [x y type] :as selected-unit} target-unit magnitude]
   (let [m  (clamp-slope (slope selected-unit target-unit))
         dx (/ magnitude (Math/sqrt (+ 1 (* m m))))
         dy (* m dx)]
     (println "M: " m " DX: " dx " DY: " dy)
-    {:x (+ x (Math/round dx))
-     :y (+ y (Math/round dy))}))
+    (if (= :red type)
+      {:x (- x (Math/ceil dx))
+       :y (- y (Math/ceil dy))}
+      {:x (+ x (Math/ceil dx))
+       :y (+ y (Math/ceil dy))})))
 
 (defn position-ball [{:keys [x y] :as coords} id]
   (if (out-of-bounds x y)

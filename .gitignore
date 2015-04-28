@@ -13,3 +13,4 @@ pom.xml.asc
 .DS_Store
 figwheel_server.log
 /.idea
+/.iml
