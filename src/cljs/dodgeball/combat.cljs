@@ -70,6 +70,9 @@
 
   (let [ball (conj (:ball (state/selected-unit)) (deflect (:x defense-unit) (:y defense-unit)))]
     (println "filtered units: " filtered-units " ball: " ball " updated unit: " updated-unit)
+    (if (= (:type defense-unit) :red)
+      (swap! state/game assoc :red-bench (conj (:red-bench @state/game) defense-unit))
+      (swap! state/game assoc :blue-bench (conj (:blue-bench @state/game) defense-unit)))
     (swap! state/game assoc :units (conj filtered-units ball updated-unit))))
 
 (defn attack [selected target]

@@ -87,31 +87,31 @@ tr.middle-top {
 }
 
 .red-team {
-  background: red url('../images/gu1.gif') no-repeat center;
+  background: url('../images/red-default.gif') no-repeat center;
   width: 64px;
   height: 64px;
 }
 
 .red-team-ball {
-  background: pink url('../images/gu1.gif') no-repeat center;
+  background: pink url('../images/red-default.gif') no-repeat center;
   width: 64px;
   height: 64px;
 }
 
 .blue-team {
-  background: blue url('../images/gu1.gif') no-repeat center;
+  background: url('../images/blue-default.gif') no-repeat center;
   width: 64px;
   height: 64px;
 }
 
 .blue-team-ball {
-  background: lightblue url('../images/gu1.gif') no-repeat center;
+  background: lightblue url('../images/blue-default.gif') no-repeat center;
   width: 64px;
   height: 64px;
 }
 
 .ball {
-  background-color: yellow;
+  background: url('../images/ball.gif') no-repeat center;
   width: 64px;
   height: 64px;
 }

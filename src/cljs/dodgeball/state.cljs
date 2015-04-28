@@ -19,9 +19,8 @@
      {:id 13 :type :ball :x 4 :y 2}
      ;{:id 14 :type :ball :x 4 :y 3}
      {:id 15 :type :ball :x 4 :y 4}]
-    :benches
-    {:blue []
-     :red []}
+    :blue-bench []
+    :red-bench []
     :turn :red
     :actions 0}))
 
