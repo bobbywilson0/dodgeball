@@ -17,6 +17,8 @@
                            [ring/ring-defaults "0.1.4"]
                            [prone "0.8.1"]
                            [compojure "1.3.3"]
+                           [org.clojure/core.cache "0.6.4"]
+                           [com.cemerick/friend "0.2.1"]
                            [selmer "0.8.2"]
                            [environ "1.0.0"]
                            [secretary "1.2.3"]
@@ -55,14 +57,14 @@
                              :dependencies [[ring-mock "0.1.5"]
                                             [ring/ring-devel "1.3.2"]
                                             [leiningen "2.5.1"]
-                                            [figwheel "0.2.6"]
+                                            [figwheel "0.2.7"]
                                             [weasel "0.6.0"]
                                             [com.cemerick/piggieback "0.2.0"]
                                             [org.clojure/tools.nrepl "0.2.10"]
                                             [pjstadig/humane-test-output "0.7.0"]]
 
                              :source-paths ["env/dev/clj"]
-                             :plugins [[lein-figwheel "0.2.5"]
+                             :plugins [[lein-figwheel "0.2.7"]
                                        [com.cemerick/clojurescript.test "0.3.2"]]
 
                              :injections [(require 'pjstadig.humane-test-output)

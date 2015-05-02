@@ -7,3 +7,6 @@
   - add different attributes to units
 - Allow two clients to be connected to the same game
 - Make balls dead until activated by being brought to back wall
+- Mark players that can be attacked with selected unit
+- create a game
+- winner / game over sequence

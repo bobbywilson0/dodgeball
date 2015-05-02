@@ -36,13 +36,8 @@
 (defn slope [{x1 :x y1 :y} {x2 :x y2 :y}]
     (/(- y2 y1) (- x2 x1)))
 
-(defn clamp-slope [m]
-  (cond (> m  4)  4
-        (< m -4) -4
-        :else m))
-
 (defn trajectory [{:keys [x y type] :as selected-unit} target-unit magnitude]
-  (let [m  (clamp-slope (slope selected-unit target-unit))
+  (let [m  (slope selected-unit target-unit)
         dx (/ magnitude (Math/sqrt (+ 1 (* m m))))
         dy (* m dx)]
     (println "M: " m " DX: " dx " DY: " dy)

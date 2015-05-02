@@ -4,13 +4,17 @@
             [ring.middleware.defaults :refer [site-defaults wrap-defaults]]
             [selmer.parser :refer [render-file]]
             [prone.middleware :refer [wrap-exceptions]]
+            [cemerick.friend :as friend]
             [environ.core :refer [env]]))
 
 (defroutes routes
-  (GET "/" [] (render-file "templates/index.html" {:dev (env :dev?)}))
-  (resources "/")
-  (not-found "Not Found"))
+           (GET "/" [] (render-file "templates/index.html" {:dev (env :dev?)}))
+           (resources "/")
+           (not-found "Not Found"))
 
 (def app
-  (let [handler (wrap-defaults routes site-defaults)]
-    (if (env :dev?) (wrap-exceptions handler) handler)))
+  (let [handler
+        (wrap-defaults routes site-defaults)]
+    (if (env :dev?)
+      (wrap-exceptions handler)
+      handler)))

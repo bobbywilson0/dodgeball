@@ -53,6 +53,8 @@
         game-state   @state/game
         defense-unit (unit/find-one-unit-by x y (state/defense) game-state)]
 
+    ; no current selection
+    ; unit in question is on current team
     (cond
       (and
         (= nil selected)
@@ -61,6 +63,8 @@
        :target   {:x x :y y}
        :selected selected}
 
+      ; a unit is selected
+      ; unit in question is on defense
       (and
         (boolean selected)
         (boolean defense-unit))
@@ -68,6 +72,9 @@
        :target   defense-unit
        :selected selected}
 
+      ; selected unit is not in movement range
+      ; or unit in question is selected unit
+      ; or
       (or
         (not (unit/in-movement-range? x y selected))
         (and
