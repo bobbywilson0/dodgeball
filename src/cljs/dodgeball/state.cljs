@@ -16,7 +16,9 @@
     :blue-bench []
     :red-bench []
     :turn :red
-    :actions 0}))
+    :actions 0
+    :selected-unit nil
+    :images-loaded false}))
 
 (defn defense []
   (if (= (:turn @game) :red)

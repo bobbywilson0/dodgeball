@@ -20,6 +20,16 @@
           (= unit-type (:type unit))))
       (:units col))))
 
+(defn unit? [x y col]
+  (first
+    (filter
+      (fn [unit]
+        (and
+          (= x (:x unit))
+          (= y (:y unit))))
+      (:units col))))
+
+
 (defn unit-adjacent-to-ball? [{ball-x :x ball-y :y}  {unit-x :x unit-y :y}]
   (or
     (and
@@ -48,35 +58,6 @@
     (and
       (= x (:x unit))
       (= y (:y unit)))))
-
-(defn css-class [x y]
-  (let [blue-unit (find-one-unit-by x y :blue @state/game)
-        red-unit  (find-one-unit-by x y :red @state/game)
-        ball-unit (find-one-unit-by x y :ball @state/game)]
-    (str
-      (cond
-        (and
-          (boolean blue-unit)
-          (:ball blue-unit))
-        "blue-team-ball"
-
-        (boolean blue-unit)
-        "blue-team"
-
-        (and
-          (boolean red-unit)
-          (:ball red-unit))
-        "red-team-ball"
-
-        (boolean red-unit)
-        "red-team"
-
-        (boolean ball-unit)
-        "ball")
-
-      (cond
-        (selected? x y)
-        (str " " "selected")))))
 
 (defn in-movement-range? [x2 y2 selected-unit]
   (let [{:keys [:x :y]} selected-unit]

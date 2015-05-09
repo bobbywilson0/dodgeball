@@ -42,6 +42,10 @@
   [(+ (+ (* x tile-size) board-offset) (/ tile-size 4))
    (* y tile-size)])
 
+(defn pixels-to-grid [x y]
+  [(Math/floor (/ (- x board-offset) tile-size))
+   (Math/floor (/ y tile-size))])
+
 (defn draw-tiles! [xOffset yOffset w h]
   (reset-canvas)
   (.translate ctx xOffset yOffset)
@@ -57,7 +61,6 @@
 (defn draw-unit! [unit]
   (let [player-sprite (new js/Image)]
     (set! (.-src player-sprite) (unit-sprite-path (:type unit)))
-    ;(set! (.-onload player-sprite)
     player-sprite))
 
 (defn redraw-unit! [unit]
@@ -81,7 +84,7 @@
 
 (defn highlight-tile [color x y]
   (let [[pixel-x pixel-y] (grid-to-pixels x y)
-        unit (unit/find-one-unit-by x y (:turn @state/game) @state/game)]
+        unit (unit/unit? x y @state/game)]
     (if (and (< x board-width) (>= x 0) (< y board-height) (>= y 0))
       (if unit
         (do
@@ -99,18 +102,21 @@
     (do
       (doall (map draw-unit! (:units @state/game)))
       (swap! state/game assoc :images-loaded true))
-    (doall (map redraw-unit! (:units @state/game))))
+    (doall (map redraw-unit! (:units @state/game)))))
+
+(defn mouse-move-highlight [e]
+  (draw-screen)
+  (apply highlight-tile "#eee" (pixels-to-grid (.-offsetX e) (.-offsetY e)))
   )
 
-(events/listen (dom/getElement "canvas") events/EventType.MOUSEDOWN #(put! mouse-down-chan %))
-(events/listen (dom/getElement "canvas") events/EventType.MOUSEMOVE #(put! mouse-move-chan %))
-
-
 (defn init! []
+  (events/listen (dom/getElement "canvas") events/EventType.MOUSEDOWN #(put! mouse-down-chan %))
+  (events/listen (dom/getElement "canvas") events/EventType.MOUSEMOVE #(put! mouse-move-chan %))
+
+
   (draw-screen)
-  (apply highlight-tile "yellow" (:selected-tile @state/game))
   (go-loop []
            (alt!
              [mouse-down-chan] ([e] (println e))
-             [mouse-move-chan] ([ch] (println "hovering")))
+             [mouse-move-chan] ([e] (mouse-move-highlight e)))
            (recur)))
