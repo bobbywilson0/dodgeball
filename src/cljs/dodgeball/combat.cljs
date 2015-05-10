@@ -3,13 +3,6 @@
             [dodgeball.state :as state]
             [dodgeball.unit :as unit]))
 
-(defn out-of-bounds [x y]
-  (or
-   (< x 0)
-   (> x 7)
-   (< y 0)
-   (> y 4)))
-
 (defn reset-ball [id]
   (case id
     11 {:y 0 :x 4}
@@ -29,7 +22,7 @@
           2 (map #(* magnitude %) [-1  0])
           3 (map #(* magnitude %) [ 1  0])
           4 (map #(* magnitude %) [ 0  1]))]
-    (if (out-of-bounds x y)
+    (if (dodgeball.core/out-of-bounds? x y)
       (reset-ball (:id (state/selected-unit)))
       (zipmap [:x :y] (map + dir [x y])))))
 
@@ -48,7 +41,7 @@
        :y (+ y (Math/ceil dy))})))
 
 (defn position-ball [{:keys [x y] :as coords} id]
-  (if (out-of-bounds x y)
+  (if (dodgeball.core/out-of-bounds? x y)
     (reset-ball id)
     coords))
 

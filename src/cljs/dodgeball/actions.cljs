@@ -17,11 +17,9 @@
     (swap! state/game assoc :units (conj filtered-units updated-unit))))
 
 (defn select-unit [unit]
-  (println "select")
   (swap! state/game assoc :selected-unit unit))
 
 (defn deselect-unit []
-  (println "deselect")
   (swap! state/game assoc :selected-unit nil))
 
 (defn increment-actions []

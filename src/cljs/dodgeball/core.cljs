@@ -12,6 +12,13 @@
 (def board-height 5)
 (def tile-size 64)
 
+(defn out-of-bounds? [x y]
+  (or
+    (< x 0)
+    (> x 8)
+    (< y 0)
+    (> y 4)))
+
 (def mouse-move-chan (chan))
 (def mouse-down-chan (chan))
 
@@ -85,7 +92,7 @@
 (defn highlight-tile [color x y]
   (let [[pixel-x pixel-y] (grid-to-pixels x y)
         unit (unit/unit? x y @state/game)]
-    (if (and (< x board-width) (>= x 0) (< y board-height) (>= y 0))
+    (if (not (out-of-bounds? x y))
       (if unit
         (do
           (draw-highlighted-tile! color (- pixel-x (/ tile-size 4)) pixel-y)
@@ -103,7 +110,7 @@
       (doall (map draw-unit! (:units @state/game)))
       (swap! state/game assoc :images-loaded true))
     (doall (map redraw-unit! (:units @state/game))))
-  (if (and (not= :selected-unit nil) (= true (:images-loaded @state/game)))
+  (if (and (:selected-unit @state/game) (:images-loaded @state/game))
     (highlight-tile "yellow" (:x (:selected-unit @state/game)) (:y (:selected-unit @state/game)))))
 
 (defn mouse-move-highlight [e]
