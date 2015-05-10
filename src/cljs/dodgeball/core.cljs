@@ -102,21 +102,21 @@
     (do
       (doall (map draw-unit! (:units @state/game)))
       (swap! state/game assoc :images-loaded true))
-    (doall (map redraw-unit! (:units @state/game)))))
+    (doall (map redraw-unit! (:units @state/game))))
+  (if (and (not= :selected-unit nil) (= true (:images-loaded @state/game)))
+    (highlight-tile "yellow" (:x (:selected-unit @state/game)) (:y (:selected-unit @state/game)))))
 
 (defn mouse-move-highlight [e]
   (draw-screen)
-  (apply highlight-tile "#eee" (pixels-to-grid (.-offsetX e) (.-offsetY e)))
-  )
+  (apply highlight-tile "#eee" (pixels-to-grid (.-offsetX e) (.-offsetY e))))
 
 (defn init! []
   (events/listen (dom/getElement "canvas") events/EventType.MOUSEDOWN #(put! mouse-down-chan %))
   (events/listen (dom/getElement "canvas") events/EventType.MOUSEMOVE #(put! mouse-move-chan %))
 
-
   (draw-screen)
   (go-loop []
            (alt!
-             [mouse-down-chan] ([e] (println e))
-             [mouse-move-chan] ([e] (mouse-move-highlight e)))
+             [mouse-down-chan] ([event] (actions/determine-action (pixels-to-grid (.-offsetX event) (.-offsetY event))))
+             [mouse-move-chan] ([event] (mouse-move-highlight event)))
            (recur)))

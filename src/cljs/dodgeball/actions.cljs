@@ -16,40 +16,34 @@
         filtered-units (filter #(not= unit %) (:units @state/game))]
     (swap! state/game assoc :units (conj filtered-units updated-unit))))
 
-(defn select-unit [{:keys [x y]}]
-  (update-unit (unit/find-one-unit-by x y (:turn @state/game) @state/game) {:selected true}))
+(defn select-unit [unit]
+  (println "select")
+  (swap! state/game assoc :selected-unit unit))
 
-(defn deselect-unit [unit]
-  (update-unit unit {:selected false}))
+(defn deselect-unit []
+  (println "deselect")
+  (swap! state/game assoc :selected-unit nil))
 
 (defn increment-actions []
   (swap! state/game update :actions inc))
 
-(defn handle-event [ch]
-  (go
-    (loop []
-      (let [event (<! ch)
-            {:keys [selected target]} event]
-        (println event)
+(defn move-unit [selected x y]
+  (update-unit selected {:x x :y y})
+  (deselect-unit)
+  (increment-actions))
 
-        (case (:type event)
-          :select-unit   (select-unit target)
-          :deselect-unit (deselect-unit selected)
-          :move-unit     (do
-                           (update-unit selected target {:selected false})
-                           (increment-actions))
-          :pickup-ball   (do
-                           (unit/pickup-ball selected target)
-                           (increment-actions))
-          :attack        (do
-                           (combat/attack selected target)
-                           (increment-actions)
-                           (deselect-unit (state/selected-unit))))
-        (if (= (:actions @state/game) 2) (switch-turns))
-        (recur)))))
+(defn pickup-ball [selected-unit unit]
+  (let [updated-unit   (conj selected-unit {:ball unit})
+        filtered-units (filter
+                         (apply every-pred [#(not= unit %) #(not= selected-unit %)])
+                         (:units @state/game))]
+    (if (unit/unit-adjacent-to-ball? unit selected-unit)
+      (swap! state/game assoc :units (conj filtered-units updated-unit))))
+  (deselect-unit)
+  (increment-actions))
 
-(defn determine-action [x y]
-  (let [selected     (state/selected-unit)
+(defn determine-action [[x y]]
+  (let [selected     (:selected-unit @state/game)
         game-state   @state/game
         defense-unit (unit/find-one-unit-by x y (state/defense) game-state)]
 
@@ -58,19 +52,18 @@
     (cond
       (and
         (= nil selected)
-        (boolean (unit/find-one-unit-by x y (:turn game-state) game-state)))
-      {:type     :select-unit
-       :target   {:x x :y y}
-       :selected selected}
+        (unit/unit? x y game-state))
+      (select-unit (unit/find-one-unit-by x y (:turn game-state) game-state))
 
       ; a unit is selected
       ; unit in question is on defense
       (and
         (boolean selected)
         (boolean defense-unit))
-      {:type     :attack
-       :target   defense-unit
-       :selected selected}
+      (do
+        (combat/attack selected defense-unit)
+        (increment-actions)
+        (deselect-unit))
 
       ; selected unit is not in movement range
       ; or unit in question is selected unit
@@ -83,21 +76,17 @@
         (and
           (= nil selected)
           (boolean defense-unit)))
-      {:type     :deselect-unit
-       :target   {:x x :y y}
-       :selected selected}
+      (deselect-unit)
 
       (and
         (boolean (unit/find-one-unit-by x y :ball game-state))
         (boolean selected))
-      {:type     :pickup-ball
-       :target   (unit/find-one-unit-by x y :ball game-state)
-       :selected selected}
+      (pickup-ball selected (unit/find-one-unit-by x y :ball game-state))
 
       (unit/in-movement-range? x y selected)
-      {:type     :move-unit
-       :target   {:x x :y y}
-       :selected selected}
+      (move-unit selected x y)
 
       :else
-      (println x y (:turn game-state)))))
+      (println x y (:turn game-state)))
+    (if (= (:actions @state/game) 2) (switch-turns))
+    (dodgeball.core/draw-screen)))

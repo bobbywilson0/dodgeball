@@ -45,14 +45,6 @@
       (= unit-y (inc ball-y))
       (= unit-x ball-x))))
 
-(defn pickup-ball [selected-unit unit]
-  (let [updated-unit   (conj selected-unit {:ball unit :selected false})
-        filtered-units (filter
-                         (apply every-pred [#(not= unit %) #(not= selected-unit %)])
-                         (:units @state/game))]
-    (if (unit-adjacent-to-ball? unit selected-unit)
-      (swap! state/game assoc :units (conj filtered-units updated-unit)))))
-
 (defn selected? [x y]
   (let [unit (state/selected-unit)]
     (and
