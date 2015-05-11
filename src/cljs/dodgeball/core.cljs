@@ -114,8 +114,12 @@
     (highlight-tile "yellow" (:x (:selected-unit @state/game)) (:y (:selected-unit @state/game)))))
 
 (defn mouse-move-highlight [e]
-  (draw-screen)
-  (apply highlight-tile "#eee" (pixels-to-grid (.-offsetX e) (.-offsetY e))))
+  (let [highlight-position (pixels-to-grid (.-offsetX e) (.-offsetY e))]
+    (if (not= (:highlighted-unit @state/game) highlight-position)
+      (do
+        (draw-screen)
+        (swap! state/game assoc :highlighted-unit highlight-position)
+        (apply highlight-tile "#eee" highlight-position)))))
 
 (defn init! []
   (events/listen (dom/getElement "canvas") events/EventType.MOUSEDOWN #(put! mouse-down-chan %))

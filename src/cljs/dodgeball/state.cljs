@@ -18,6 +18,7 @@
     :turn :red
     :actions 0
     :selected-unit nil
+    :highlighted-unit nil
     :images-loaded false}))
 
 (defn defense []

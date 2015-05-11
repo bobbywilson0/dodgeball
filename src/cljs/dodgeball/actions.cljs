@@ -25,6 +25,20 @@
 (defn increment-actions []
   (swap! state/game update :actions inc))
 
+(defn movable-tiles [unit]
+  (let [x-range (range (max 0 (- (:x unit) 4)) (min (+ (:x unit) 4) dodgeball.core/board-width))
+        y-range (range (max 0 (- (:y unit) 4)) (min (+ (:y unit) 4) dodgeball.core/board-height))]
+    (mapcat
+      (fn [x] (map (fn [y] [x y]) y-range))
+      x-range)))
+
+(defn highlight-movement-range [unit]
+  (doall
+    (map
+      (fn [[x y]]
+        (dodgeball.core/highlight-tile "#ddd" x y))
+      (movable-tiles unit))))
+
 (defn move-unit [selected x y]
   (update-unit selected {:x x :y y})
   (deselect-unit)
@@ -51,7 +65,10 @@
       (and
         (= nil selected)
         (unit/unit? x y game-state))
-      (select-unit (unit/find-one-unit-by x y (:turn game-state) game-state))
+      (do
+        (select-unit (unit/find-one-unit-by x y (:turn game-state) game-state))
+        (dodgeball.core/draw-screen)
+        (highlight-movement-range (:selected-unit @state/game)))
 
       ; a unit is selected
       ; unit in question is on defense
@@ -61,7 +78,8 @@
       (do
         (combat/attack selected defense-unit)
         (increment-actions)
-        (deselect-unit))
+        (deselect-unit)
+        (dodgeball.core/draw-screen))
 
       ; selected unit is not in movement range
       ; or unit in question is selected unit
@@ -74,9 +92,11 @@
         (and
           (= nil selected)
           (boolean defense-unit)))
-      (deselect-unit)
+      (do
+        (deselect-unit)
+        (dodgeball.core/draw-screen))
 
-      (and
+        (and
         (boolean (unit/find-one-unit-by x y :ball game-state))
         (boolean selected))
       (pickup-ball selected (unit/find-one-unit-by x y :ball game-state))
@@ -87,4 +107,4 @@
       :else
       (println x y (:turn game-state)))
     (if (= (:actions @state/game) 2) (switch-turns))
-    (dodgeball.core/draw-screen)))
+    ))
