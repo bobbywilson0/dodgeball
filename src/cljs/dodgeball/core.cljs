@@ -12,6 +12,9 @@
 (def board-height 5)
 (def tile-size 64)
 
+(def bench-top-offset 50)
+(def bench-x-offset 670)
+
 (defn out-of-bounds? [x y]
   (or
     (< x 0)
@@ -29,6 +32,9 @@
 (defn reset-canvas []
   (.setTransform ctx 1, 0, 0, 1, 0.5, 0.5))
 
+(defn clear-screen! []
+  (.clearRect ctx 0 0 (.-width (dom/getElement "canvas")) (.-height (dom/getElement "canvas"))))
+
 (defn draw-tile! [x y]
   (.beginPath ctx)
   (.rect ctx x y tile-size tile-size)
@@ -37,6 +43,9 @@
   (set! (.-lineWidth ctx) 0.5)
   (set! (.-strokeStyle ctx) "black")
   (.stroke ctx))
+
+
+
 
 (defn unit-sprite-path [type]
 
@@ -49,6 +58,13 @@
   [(+ (+ (* x tile-size) board-offset) (/ tile-size 4))
    (* y tile-size)])
 
+(defn draw-tile! [x y]
+;  (reset-canvas)
+  (let [tile-sprite (new js/Image)]
+    (set! (.-src tile-sprite) "images/tile.gif")
+    (.drawImage ctx tile-sprite x y)
+    tile-sprite))
+
 (defn pixels-to-grid [x y]
   [(Math/floor (/ (- x board-offset) tile-size))
    (Math/floor (/ y tile-size))])
@@ -56,27 +72,25 @@
 (defn draw-tiles! [xOffset yOffset w h]
   (reset-canvas)
   (.translate ctx xOffset yOffset)
-  (doall
-    (map
+    (mapv
       (fn [y]
-        (doall
-          (map
-            (fn [x] (draw-tile! (* tile-size x) (* tile-size y)))
-            (range 0 w))))
-      (range 0 h))))
+        (mapv
+          (fn [x] (draw-tile! (* tile-size x) (* tile-size y)))
+          (range 0 w)))
+      (range 0 h)))
+
+;(defn draw-unit! [unit]
+;  (let [player-sprite (new js/Image)]
+;    (set! (.-src player-sprite) (unit-sprite-path (:type unit)))
+;    player-sprite))
 
 (defn draw-unit! [unit]
-  (let [player-sprite (new js/Image)]
-    (set! (.-src player-sprite) (unit-sprite-path (:type unit)))
-    player-sprite))
-
-(defn redraw-unit! [unit]
   (reset-canvas)
   (let [player-sprite (new js/Image)
         [x y] (grid-to-pixels (:x unit) (:y unit))]
     (set! (.-src player-sprite) (unit-sprite-path (:type unit)))
     (set! (.-width player-sprite) "32px")
-    (set! (.-width player-sprite) "64px")
+    (set! (.-height player-sprite) "64px")
     (.drawImage ctx player-sprite x y)
     player-sprite))
 
@@ -96,22 +110,20 @@
       (if unit
         (do
           (draw-highlighted-tile! color (- pixel-x (/ tile-size 4)) pixel-y)
-          (redraw-unit! unit))
+          (draw-unit! unit))
         (draw-highlighted-tile! color (- pixel-x (/ tile-size 4)) pixel-y)))))
 
 (defn draw-screen []
-  (.clearRect ctx 0 0 (.-width (dom/getElement "canvas")) (.-height (dom/getElement "canvas")))
-  (draw-tiles! 0 50 1 3)
+  ;draw left bench
+  (draw-tiles! 0 bench-top-offset 1 3)
+  ;draw blank board
   (draw-tiles! board-offset 0 board-width board-height)
-  (draw-tiles! 670 50 1 3)
+  ;draw right bench
+  (draw-tiles! bench-x-offset bench-top-offset 1 3)
 
-  (if (not (:images-loaded @state/game))
-    (do
-      (doall (map draw-unit! (:units @state/game)))
-      (swap! state/game assoc :images-loaded true))
-    (doall (map redraw-unit! (:units @state/game))))
-  (if (and (:selected-unit @state/game) (:images-loaded @state/game))
-    (highlight-tile "yellow" (:x (:selected-unit @state/game)) (:y (:selected-unit @state/game)))))
+  (mapv draw-unit! (:units @state/game)))
+  (if (:selected-unit @state/game)
+    (highlight-tile "yellow" (:x (:selected-unit @state/game)) (:y (:selected-unit @state/game))))
 
 (defn mouse-move-highlight [e]
   (let [highlight-position (pixels-to-grid (.-offsetX e) (.-offsetY e))]
@@ -124,6 +136,7 @@
 (defn init! []
   (events/listen (dom/getElement "canvas") events/EventType.MOUSEDOWN #(put! mouse-down-chan %))
   (events/listen (dom/getElement "canvas") events/EventType.MOUSEMOVE #(put! mouse-move-chan %))
+
 
   (draw-screen)
   (go-loop []
