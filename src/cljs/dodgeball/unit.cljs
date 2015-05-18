@@ -52,17 +52,4 @@
       (= y (:y unit)))))
 
 (defn in-movement-range? [x2 y2 selected-unit]
-  (let [{:keys [:x :y]} selected-unit]
-    (and
-      (or
-        (and
-          (= :blue (:turn @state/game))
-          (<= x2 4))
-        (and
-          (= :red (:turn @state/game))
-          (>= x2 4)))
-      (<=
-        (reduce
-          +
-          (map distance [x2 y2] [x y]))
-        move-range))))
+  (clojure.set/subset? #{[x2 y2]} (:movement-range @state/game)))

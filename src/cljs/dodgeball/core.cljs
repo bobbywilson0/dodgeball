@@ -58,12 +58,12 @@
   [(+ (+ (* x tile-size) board-offset) (/ tile-size 4))
    (* y tile-size)])
 
-(defn draw-tile! [x y]
-;  (reset-canvas)
-  (let [tile-sprite (new js/Image)]
-    (set! (.-src tile-sprite) "images/tile.gif")
-    (.drawImage ctx tile-sprite x y)
-    tile-sprite))
+;(defn draw-tile! [x y]
+;;  (reset-canvas)
+;  (let [tile-sprite (new js/Image)]
+;    (set! (.-src tile-sprite) "images/tile.gif")
+;    (.drawImage ctx tile-sprite x y)
+;    tile-sprite))
 
 (defn pixels-to-grid [x y]
   [(Math/floor (/ (- x board-offset) tile-size))
@@ -121,9 +121,13 @@
   ;draw right bench
   (draw-tiles! bench-x-offset bench-top-offset 1 3)
 
-  (mapv draw-unit! (:units @state/game)))
+  (mapv draw-unit! (:units @state/game))
   (if (:selected-unit @state/game)
-    (highlight-tile "yellow" (:x (:selected-unit @state/game)) (:y (:selected-unit @state/game))))
+    (highlight-tile "#ccc" (:x (:selected-unit @state/game)) (:y (:selected-unit @state/game))))
+  (mapv
+    (fn [[x y]]
+      (highlight-tile "#ddd" x y))
+    (:movement-range @state/game)))
 
 (defn mouse-move-highlight [e]
   (let [highlight-position (pixels-to-grid (.-offsetX e) (.-offsetY e))]

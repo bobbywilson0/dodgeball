@@ -19,6 +19,7 @@
     :actions 0
     :selected-unit nil
     :highlighted-unit nil
+    :movement-range nil
     :images-loaded false}))
 
 (defn defense []
