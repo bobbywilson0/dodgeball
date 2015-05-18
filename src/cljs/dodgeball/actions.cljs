@@ -121,13 +121,18 @@
         (deleselect-movement-range)
         (dodgeball.core/draw-screen))
 
-        (and
+      (and
         (boolean (unit/find-one-unit-by x y :ball game-state))
         (boolean selected))
       (pickup-ball selected (unit/find-one-unit-by x y :ball game-state))
 
       (unit/in-movement-range? x y selected)
-      (move-unit selected x y)
+      (do
+        (move-unit selected x y)
+        (deselect-unit)
+        (deleselect-movement-range)
+        (dodgeball.core/draw-screen))
+
 
       :else
       (println x y (:turn game-state)))
