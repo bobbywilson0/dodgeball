@@ -2,6 +2,7 @@
   (:require [reagent.core :refer [atom]]
             [cljs.core.async :refer [<!]]
             [clojure.set :as s]
+            [cljs.core.match :refer-macros [match]]
             [dodgeball.unit :as unit]
             [dodgeball.state :as state]
             [dodgeball.combat :as combat])
@@ -38,22 +39,17 @@
   (println unit)
   (case (:type unit)
     :red  red-tiles
-    :blue blue-tiles))
+    :blue blue-tiles
+    nil ""))
 
 (defn unit-tiles []
   (set (map (fn [unit] [(:x unit) (:y unit)]) (:units @state/game))))
-
-(defn move-range [unit]
-    (concat
-      (tiles-in (range 4 (- (:x unit) 3)) (range 0 dodgeball.core/board-height))
-      (tiles-in (range 4 dodgeball.core/board-width) (range (+ (:y unit) 3) dodgeball.core/board-height))))
 
 (defn movable-tiles [unit]
   (s/difference
     (team-tiles unit)
     (unit-tiles)
-    (select-keys (:selected-unit @state/game) [:x :y])
-    (move-range (:selected-unit @state/game))))
+    (select-keys (:selected-unit @state/game) [:x :y])))
 
 (defn select-movement-range [unit]
   (swap! state/game assoc :movement-range (movable-tiles unit)))
@@ -82,59 +78,60 @@
         game-state   @state/game
         defense-unit (unit/find-one-unit-by x y (state/defense) game-state)]
 
-    ; no current selection
-    ; unit in question is on current team
-    (cond
-      (and
-        (= nil selected)
-        (unit/unit? x y game-state))
-      (do
-        (select-unit (unit/find-one-unit-by x y (:turn game-state) game-state))
-        (select-movement-range (:selected-unit @state/game))
-        (dodgeball.core/draw-screen))
+    (match [(not= nil selected)
+            (boolean (unit/unit? x y game-state))
+            (boolean defense-unit)
+            (unit/in-movement-range? x y selected)]
 
-      ; a unit is selected
-      ; unit in question is on defense
-      (and
-        (boolean selected)
-        (boolean defense-unit))
-      (do
-        (combat/attack selected defense-unit)
-        (increment-actions)
-        (deselect-unit)
-        (deleselect-movement-range)
-        (dodgeball.core/draw-screen))
+           ; select unit
+           [false true false _]
+           (do
+             (select-unit (unit/find-one-unit-by x y (:turn game-state) game-state))
+             (select-movement-range (:selected-unit @state/game))
+             (dodgeball.core/draw-screen))
 
-      ; selected unit is not in movement range
-      ; or unit in question is selected unit
-      ; or
-      (or
-        (not (unit/in-movement-range? x y selected))
-        (and
-          (= x (:x selected))
-          (= y (:y selected)))
-        (and
-          (= nil selected)
-          (boolean defense-unit)))
-      (do
-        (deselect-unit)
-        (deleselect-movement-range)
-        (dodgeball.core/draw-screen))
+           ; attack unit
+           [true _ true _]
+           (do
+             (combat/attack selected defense-unit)
+             (increment-actions)
+             (deselect-unit)
+             )
 
-      (and
-        (boolean (unit/find-one-unit-by x y :ball game-state))
-        (boolean selected))
-      (pickup-ball selected (unit/find-one-unit-by x y :ball game-state))
+           ; move unit
+           [true false false true]
+           (do
+             (move-unit selected x y)
+             (deselect-unit)
+             (deleselect-movement-range)
+             (dodgeball.core/draw-screen))
 
-      (unit/in-movement-range? x y selected)
-      (do
-        (move-unit selected x y)
-        (deselect-unit)
-        (deleselect-movement-range)
-        (dodgeball.core/draw-screen))
+           ;; deselect unit
+           [true true _ _]
+           (do
+             (deselect-unit)
+             (deleselect-movement-range)
+             (dodgeball.core/draw-screen))
 
+           ; deselect
+           [true _ _ false]
+           (do
+             (deselect-unit)
+             (deleselect-movement-range)
+             (dodgeball.core/draw-screen))
 
-      :else
-      (println x y (:turn game-state)))
-    (if (= (:actions @state/game) 2) (switch-turns))
-    ))
+           [false _ _ false]
+           (do
+             (deselect-unit)
+             (deleselect-movement-range)
+             (dodgeball.core/draw-screen))
+
+           ; move unit
+           [true false false true]
+           (do
+             (move-unit selected x y)
+             (deselect-unit)
+             (deleselect-movement-range)
+             (dodgeball.core/draw-screen)))
+
+    (if (= (:actions @state/game) 2) (switch-turns))))
